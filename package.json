@@ -1,0 +1,16 @@
+{
+  "name": "maga-curve-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Interactive elliptic curve point addition over F_p: re-implementation of Corbellini's page plus the toy Montgomery curve from the thesis",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "serve": "node scripts/serve.mjs",
+    "fixture": "node scripts/corbellini-fixture.mjs"
+  }
+}

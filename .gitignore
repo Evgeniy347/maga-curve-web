@@ -1,0 +1,4 @@
+tmp/*
+!tmp/.gitkeep
+node_modules/
+.claude/settings.local.json

@@ -1,3 +1,5 @@
+name: maga-curve-web
+
 services:
   maga-curve-web:
     build:

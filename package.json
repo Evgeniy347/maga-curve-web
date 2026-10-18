@@ -9,7 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --test \"tests/*.test.js\"",
     "serve": "node scripts/serve.mjs",
     "fixture": "node scripts/corbellini-fixture.mjs && node scripts/corbellini-reals-fixture.mjs",
     "mutate": "node scripts/mutate.mjs"

@@ -7,11 +7,15 @@ function node(tag, className, children = []) {
   return element;
 }
 
+function tailOf(item, p) {
+  return p === undefined ? [] : reductionTail(item.raw, p);
+}
+
 function stepItem(item, number, p, isFinal) {
-  const calculation = [...item.forms, ...reductionTail(item.raw, p)];
+  const calculation = [...item.forms, ...tailOf(item, p)];
   const rhs = node("span", "rhs");
   if (calculation.length > 0) {
-    rhs.append(node("span", "calc", [calculation.join(" = ")]), node("span", "eq", [" ≡ "]));
+    rhs.append(node("span", "calc", [calculation.join(" = ")]), node("span", "eq", [p === undefined ? " = " : " ≡ "]));
   }
   rhs.append(node("span", "val", [String(item.value)]));
   return node("li", isFinal ? "step is-final" : "step", [
@@ -34,7 +38,7 @@ function stageItem(stage, index, firstNumber, p) {
 }
 
 function sideText(side, p) {
-  const tail = reductionTail(side.raw, p);
+  const tail = tailOf(side, p);
   const chain = [side.label, ...side.forms, ...tail];
   if (tail.length === 0 && side.raw === side.value) return [...chain, String(side.value)].join(" = ");
   return `${chain.join(" = ")} ≡ ${side.value}`;
@@ -47,22 +51,26 @@ function checkItem(check, p) {
       node("span", check.holds ? "stage-no ok" : "stage-no", [check.holds ? "✓" : "✗"]),
       node("h3", "", ["Проверка: R лежит на кривой"]),
     ]),
-    node("p", check.holds ? "check mono" : "check mono fails", [
-      `${sideText(check.left, p)};  ${sideText(check.right, p)}  `,
-      node("b", "", [verdict]),
+    node("div", check.holds ? "check mono" : "check mono fails", [
+      node("p", "check-side", [sideText(check.left, p)]),
+      node("p", "check-side", [sideText(check.right, p)]),
+      node("p", "check-verdict", [node("b", "", [verdict])]),
     ]),
   ]);
 }
 
-export function renderSteps(list, curve, first, second, names) {
-  const { stages, check, message } = additionStages(curve, first, second, names);
+export function renderStages(list, { stages, check, message }, p) {
   const items = [];
   let number = 1;
   stages.forEach((stage, index) => {
-    items.push(stageItem(stage, index, number, curve.p));
+    items.push(stageItem(stage, index, number, p));
     number += stage.steps.length;
   });
   if (message) items.push(node("li", "stage", [node("p", "step-message", [message])]));
-  if (check) items.push(checkItem(check, curve.p));
+  if (check) items.push(checkItem(check, p));
   list.replaceChildren(...items);
+}
+
+export function renderSteps(list, curve, first, second, names) {
+  renderStages(list, additionStages(curve, first, second, names), curve.p);
 }

@@ -12,14 +12,14 @@ const defaults = (html) => Object.fromEntries(
 const montgomeryPage = defaults(read("montgomery-add.html"));
 const weierstrassPage = defaults(read("modk-add.html"));
 
-test("Montgomery page opens on the toy curve of dlog-p29v2.md with P = (2, 11), Q = (7, 8)", () => {
+test("Montgomery page opens on the curve of dlog-p29v2.md with P = (2, 11), Q = (7, 8)", () => {
   assert.deepEqual(
     montgomeryPage, { a: 6, b: 1, p: 29, px: 2, py: 11, qx: 7, qy: 8 },
     "defaults must be y² = x³ + 6x² + x over F_29 and the pair from п. 1.6.2 so the steps panel matches the manual run",
   );
 });
 
-test("Weierstrass page opens on the same toy curve via X = x + A/3", () => {
+test("Weierstrass page opens on the same curve via X = x + A/3", () => {
   const { p } = montgomeryPage;
   const A = montgomeryPage.a;
   const shift = mod(A * inverse(3, p), p);
@@ -42,10 +42,9 @@ test("Weierstrass page opens on the same toy curve via X = x + A/3", () => {
   );
 });
 
-test("the landing page leads to the thesis curve page and plots the same sum", async () => {
-  const html = read("index.html");
-  assert.match(html, /class="btn btn-primary" href="montgomery-add\.html"/, "the main call to action opens the Montgomery page");
-  const { THESIS_CURVE, THESIS_SUM } = await import("../site/js/landing.js");
+test("the landing page links to the thesis curve page and plots the same sum", async () => {
+  assert.match(read("index.html"), /class="tool-card card" href="montgomery-add\.html"/, "a tool card opens the Montgomery page");
+  const { THESIS_CURVE, THESIS_SUM } = await import("../site/js/forms.js");
   assert.deepEqual(
     [THESIS_CURVE.A, THESIS_CURVE.B, THESIS_CURVE.p, ...THESIS_SUM.P, ...THESIS_SUM.Q],
     [montgomeryPage.a, montgomeryPage.b, montgomeryPage.p, montgomeryPage.px, montgomeryPage.py, montgomeryPage.qx, montgomeryPage.qy],

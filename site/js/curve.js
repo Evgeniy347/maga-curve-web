@@ -157,3 +157,105 @@ export function weierstrass({ a, b, p }) {
 export function montgomery({ A, B = 1, p }) {
   return new CubicCurve({ p, A, B, C: 1 });
 }
+
+function sortedUnique(values) {
+  return [...new Set([...values].sort((x, y) => x - y))];
+}
+
+export function cubicRoots(a, b) {
+  const q = a / 3;
+  const r = -b / 2;
+  const delta = q * q * q + r * r;
+  if (delta > 0) {
+    return sortedUnique([Math.cbrt(r + Math.sqrt(delta)) + Math.cbrt(r - Math.sqrt(delta))]);
+  }
+  if (delta < 0) {
+    const s = Math.acos(r / Math.sqrt(-q * q * q));
+    const t = 2 * Math.sqrt(-q);
+    return sortedUnique([0, 2, 4].map((k) => t * Math.cos((s + k * Math.PI) / 3)));
+  }
+  return sortedUnique([2 * Math.cbrt(r), Math.cbrt(-r)]);
+}
+
+export class RealCurve {
+  constructor({ a, b }) {
+    this.a = a;
+    this.b = b;
+  }
+
+  rhs(x) {
+    return x * (x * x + this.a) + this.b;
+  }
+
+  y(x) {
+    return Math.sqrt(this.rhs(x));
+  }
+
+  roots() {
+    return cubicRoots(this.a, this.b);
+  }
+
+  xsAt(y) {
+    return cubicRoots(this.a, this.b - y * y);
+  }
+
+  stationaryPoints() {
+    const x0 = -Math.sqrt(-this.a / 3);
+    const x1 = -x0;
+    const y0 = Math.sqrt(this.b - 2 * x0 * x0 * x0);
+    const y1 = Math.sqrt(this.b - 2 * x1 * x1 * x1);
+    if (Number.isNaN(x0) || Number.isNaN(y0)) return [];
+    if (x0 === 0 || Number.isNaN(y1)) return [[x0, y0]];
+    return [[x0, y0], [x1, y1]];
+  }
+
+  isSingular() {
+    return 4 * this.a ** 3 + 27 * this.b ** 2 === 0;
+  }
+
+  neg(point) {
+    if (point === INFINITY) return INFINITY;
+    return [point[0], -point[1]];
+  }
+
+  addTrace(first, second) {
+    if (first === INFINITY) return { kind: "identity", result: second };
+    if (second === INFINITY) return { kind: "identity", result: first };
+    const [x1, y1] = first;
+    const [x2, y2] = second;
+    let kind = "chord";
+    let lambda = (y1 - y2) / (x1 - x2);
+    if (x1 === x2) {
+      if (y1 !== y2 || y1 === 0) return { kind: "vertical", result: INFINITY };
+      kind = "tangent";
+      lambda = (3 * x1 * x1 + this.a) / y1 / 2;
+    }
+    const x3 = lambda * lambda - x1 - x2;
+    const y3 = lambda * (x1 - x3) - y1;
+    return { kind, lambda, x3, y3, result: [x3, y3] };
+  }
+
+  add(first, second) {
+    return this.addTrace(first, second).result;
+  }
+
+  multiply(scalar, point) {
+    return doubleAndAdd(this, scalar, point).at(-1).point;
+  }
+}
+
+export function doubleAndAdd(curve, scalar, point) {
+  const base = scalar < 0 ? curve.neg(point) : point;
+  const bits = Math.abs(scalar).toString(2);
+  if (scalar === 0 || point === INFINITY) return [{ action: "zero", multiplier: 0, point: INFINITY }];
+  const chain = [{ action: "start", bit: 1, multiplier: 1, point: base }];
+  for (const bit of bits.slice(1)) {
+    const last = chain.at(-1);
+    chain.push({ action: "double", bit: Number(bit), multiplier: 2 * last.multiplier, point: curve.add(last.point, last.point) });
+    if (bit === "1") {
+      const doubled = chain.at(-1);
+      chain.push({ action: "add", multiplier: doubled.multiplier + 1, point: curve.add(doubled.point, base) });
+    }
+  }
+  return chain.map((step) => ({ ...step, multiplier: Math.sign(scalar) * step.multiplier }));
+}

@@ -67,6 +67,14 @@ function round(value) {
   return Math.round(value * 10) / 10;
 }
 
+function tickLabel(value) {
+  return value < 0 ? `−${-value}` : String(value);
+}
+
+function coordinate(value) {
+  return String(Math.round(value * 1e5) / 1e5);
+}
+
 let instances = 0;
 
 export class Plot {
@@ -85,8 +93,8 @@ export class Plot {
     ];
   }
 
-  render({ p, points, chord, P, Q, R, third, caption, description }) {
-    this.range = plotRange(p);
+  render({ range, points = [], pointRadius: radius = POINT_RADIUS.max, curveLines = [], chord = [], badges = [], R = null, third = null, caption, description }) {
+    this.range = range;
     const { view, left, top, size } = LAYOUT;
     const clip = `${this.id}-clip`;
     const svg = element("svg", {
@@ -101,14 +109,13 @@ export class Plot {
       element("rect", { class: "plot-bg", x: left, y: top, width: size, height: size, rx: 4 }),
       this.grid(),
       element("g", { "clip-path": `url(#${clip})` }, [
-        this.chordPaths(chord),
+        this.polylines("plot-curve", curveLines),
+        this.polylines("plot-chord", [chord]),
         this.reflection(R, third),
-        this.curvePoints(points, pointRadius(p)),
+        this.curvePoints(points, radius),
         this.thirdPoint(R, third),
       ]),
-      this.badge("P", "is-p", P),
-      this.badge("Q", "is-q", Q),
-      this.badge("R", "is-r", R),
+      ...badges.map(({ name, role, point }) => this.badge(name, role, point)),
     ]);
     this.container.replaceChildren(svg);
   }
@@ -119,30 +126,30 @@ export class Plot {
     const lines = [];
     const labels = [];
     for (const value of ticks(range.xMin, range.xMax, size)) {
-      const [x] = this.toPixel([value, 0]);
+      const [x] = this.toPixel([value, range.yMin]);
       lines.push(element("line", { x1: x, y1: top, x2: x, y2: top + size }));
-      labels.push(element("text", { x, y: top + size + tickGap, "text-anchor": "middle" }, [String(value)]));
+      labels.push(element("text", { x, y: top + size + tickGap, "text-anchor": "middle" }, [tickLabel(value)]));
     }
     for (const value of ticks(range.yMin, range.yMax, size)) {
-      const [, y] = this.toPixel([0, value]);
+      const [, y] = this.toPixel([range.xMin, value]);
       lines.push(element("line", { x1: left, y1: y, x2: left + size, y2: y }));
-      labels.push(element("text", { x: left - tickLabelGap, y: y + 4, "text-anchor": "end" }, [String(value)]));
+      labels.push(element("text", { x: left - tickLabelGap, y: y + 4, "text-anchor": "end" }, [tickLabel(value)]));
     }
     return element("g", {}, [element("g", { class: "plot-grid" }, lines), element("g", { class: "plot-ticks" }, labels)]);
   }
 
-  chordPaths(chord) {
-    const paths = segments(chord).map((segment) => {
+  polylines(className, polylines) {
+    const paths = polylines.flatMap(segments).map((segment) => {
       const d = segment.map((point, i) => `${i === 0 ? "M" : "L"}${this.toPixel(point).join(" ")}`).join("");
       return element("path", { d });
     });
-    return element("g", { class: "plot-chord" }, paths);
+    return element("g", { class: className }, paths);
   }
 
   curvePoints(points, radius) {
     const circles = points.map((point) => {
       const [cx, cy] = this.toPixel(point);
-      return element("circle", { cx, cy, r: radius }, [title(`(${point[0]}, ${point[1]})`)]);
+      return element("circle", { cx, cy, r: radius }, [title(`(${coordinate(point[0])}, ${coordinate(point[1])})`)]);
     });
     return element("g", { class: "plot-points" }, circles);
   }
@@ -160,7 +167,7 @@ export class Plot {
     return element("g", { class: "plot-third", transform: `translate(${x} ${y})` }, [
       element("circle", { r: LAYOUT.thirdRadius }),
       element("text", { x: 12, y: -8 }, ["−R"]),
-      title(`−R = (${third[0]}, ${third[1]}) — третья точка на секущей`),
+      title(`−R = (${coordinate(third[0])}, ${coordinate(third[1])}) — третья точка на прямой`),
     ]);
   }
 
@@ -170,7 +177,7 @@ export class Plot {
     return element("g", { class: `badge ${role}`, transform: `translate(${x} ${y})` }, [
       element("circle", { r: LAYOUT.badgeRadius }),
       element("text", { y: 4.5, "text-anchor": "middle" }, [name]),
-      title(`${name} = (${point[0]}, ${point[1]})`),
+      title(`${name} = (${coordinate(point[0])}, ${coordinate(point[1])})`),
     ]);
   }
 }

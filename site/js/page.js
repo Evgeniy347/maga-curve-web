@@ -1,7 +1,7 @@
 import { INFINITY } from "./curve.js";
 import { lineThrough } from "./chord.js";
 import { largestPrimeFactor, mod } from "./field.js";
-import { Plot, plotRange } from "./plot.js";
+import { Plot, plotRange, pointRadius } from "./plot.js";
 import { snapToCurve } from "./snap.js";
 
 const LINE_KINDS = { tangent: "касательная", vertical: "вертикаль" };
@@ -51,18 +51,27 @@ export function groupStructure(order) {
   return { subgroup, cofactor: order / subgroup };
 }
 
+export function pointBadges(P, Q, R) {
+  return [
+    { name: "P", role: "is-p", point: P },
+    { name: "Q", role: "is-q", point: Q },
+    { name: "R", role: "is-r", point: R },
+  ];
+}
+
 export function buildScene(curve, P, Q, trace = curve.addTrace(P, Q)) {
   const R = trace.result;
   const { p } = curve;
   const third = R ? curve.neg(R) : null;
   const line = lineEquation(trace, P, p);
   const lineKind = LINE_KINDS[trace.kind] ?? "секущая";
+  const range = plotRange(p);
   const scene = {
-    p,
+    range,
     points: curve.points(),
-    chord: lineThrough(trace, P, p, plotRange(p)),
-    P,
-    Q,
+    pointRadius: pointRadius(p),
+    chord: lineThrough(trace, P, p, range),
+    badges: pointBadges(P, Q, R),
     R,
     third,
     caption: `График: R = P + Q на кривой над 𝔽${p}`,
@@ -71,10 +80,11 @@ export function buildScene(curve, P, Q, trace = curve.addTrace(P, Q)) {
   return { scene, third, line, lineKind };
 }
 
-class PointInput {
-  constructor(root, prefix) {
+export class PointInput {
+  constructor(root, prefix, snapper = snapToCurve) {
     this.x = root.querySelector(`input[name='${prefix}x']`);
     this.y = root.querySelector(`input[name='${prefix}y']`);
+    this.snapper = snapper;
     this.previous = this.read();
   }
 
@@ -83,25 +93,17 @@ class PointInput {
   }
 
   snap(curve) {
-    const point = snapToCurve(curve, this.read(), this.previous);
+    const point = this.snapper(curve, this.read(), this.previous);
     [this.x.value, this.y.value] = point;
     this.previous = point;
     return point;
   }
 }
 
-export class AdditionPage {
-  constructor(root, form) {
+export class FormPage {
+  constructor(root) {
     this.root = root;
-    this.form = form;
     this.applyQuery(queryValues(window.location.search));
-    this.coefficients = form.coefficients.map((name) => root.querySelector(`input[name='${name}']`));
-    this.fieldInput = root.querySelector("input[name='p']");
-    this.pInput = new PointInput(root, "p");
-    this.qInput = new PointInput(root, "q");
-    this.rx = root.querySelector("input[name='rx']");
-    this.ry = root.querySelector("input[name='ry']");
-    this.plot = new Plot(root.querySelector("#plot"));
     this.listeners = [];
     for (const input of root.querySelectorAll("#form input:not([readonly])")) {
       input.addEventListener("change", () => this.update());
@@ -119,20 +121,63 @@ export class AdditionPage {
     this.listeners.push(listener);
   }
 
-  readCoefficients() {
-    return Object.fromEntries(this.form.coefficients.map((name, i) => [name, Number(this.coefficients[i].value)]));
+  input(name) {
+    return this.root.querySelector(`input[name='${name}']`);
+  }
+
+  number(name) {
+    return Number(this.input(name).value);
+  }
+
+  emit(state) {
+    for (const listener of this.listeners) listener(state);
+  }
+
+  text(selector, value) {
+    const node = this.root.querySelector(selector);
+    if (node && value !== null) node.textContent = String(value);
+    return node;
+  }
+
+  html(selector, value) {
+    const node = this.root.querySelector(selector);
+    if (node) node.innerHTML = value;
+  }
+
+  toggle(selector, visible) {
+    for (const node of this.root.querySelectorAll(selector)) {
+      node.style.display = visible ? (node.classList.contains("alert") ? "flex" : "") : "none";
+    }
+  }
+
+  markPreset() {
+    const current = new Map([...this.root.querySelectorAll("#form input:not([readonly])")].map((input) => [input.name, input.value]));
+    for (const chip of this.root.querySelectorAll("a.chip[href*='?']")) {
+      const preset = queryValues(chip.getAttribute("href"));
+      const matches = [...preset].every(([name, value]) => current.get(name) === value);
+      chip.setAttribute("aria-current", String(matches));
+    }
+  }
+}
+
+export class AdditionPage extends FormPage {
+  constructor(root, form) {
+    super(root);
+    this.form = form;
+    this.pInput = new PointInput(root, "p");
+    this.qInput = new PointInput(root, "q");
+    this.plot = new Plot(root.querySelector("#plot"));
   }
 
   update() {
-    const coefficients = this.readCoefficients();
-    const p = Number(this.fieldInput.value);
-    const curve = this.form.create({ ...coefficients, p });
+    const coefficients = Object.fromEntries(this.form.coefficients.map((name) => [name, this.number(name)]));
+    const curve = this.form.create({ ...coefficients, p: this.number("p") });
     const P = this.pInput.snap(curve);
     const Q = this.qInput.snap(curve);
     const trace = curve.addTrace(P, Q);
     const state = { coefficients, curve, P, Q, trace };
     this.render(state);
-    for (const listener of this.listeners) listener(state);
+    this.emit(state);
   }
 
   render({ coefficients, curve, P, Q, trace }) {
@@ -140,10 +185,10 @@ export class AdditionPage {
     const { p } = curve;
     const { scene, third, line, lineKind } = buildScene(curve, P, Q, trace);
     this.plot.render(scene);
-    this.rx.value = formatCoordinate(R, 0);
-    this.ry.value = formatCoordinate(R, 1);
+    this.input("rx").value = formatCoordinate(R, 0);
+    this.input("ry").value = formatCoordinate(R, 1);
     const { subgroup, cofactor } = groupStructure(curve.order());
-    this.text(".curve-equation", null).innerHTML = this.form.equation(coefficients);
+    this.html(".curve-equation", this.form.equation(coefficients));
     this.text(".field-order", p);
     this.text(".curve-order", curve.order());
     this.text(".curve-order-factor", `= ${cofactor}·${subgroup}`);
@@ -162,26 +207,5 @@ export class AdditionPage {
     this.toggle(".curve-singular-warning", curve.isSingular());
     this.toggle(".composite-warning", !curve.isFieldPrime());
     this.markPreset();
-  }
-
-  text(selector, value) {
-    const node = this.root.querySelector(selector);
-    if (node && value !== null) node.textContent = String(value);
-    return node;
-  }
-
-  toggle(selector, visible) {
-    const node = this.root.querySelector(selector);
-    if (node) node.style.display = visible ? "" : "none";
-    if (node && visible && node.classList.contains("alert")) node.style.display = "flex";
-  }
-
-  markPreset() {
-    const current = new Map([...this.root.querySelectorAll("#form input:not([readonly])")].map((input) => [input.name, input.value]));
-    for (const chip of this.root.querySelectorAll("a.chip[href*='?']")) {
-      const preset = queryValues(chip.getAttribute("href"));
-      const matches = [...preset].every(([name, value]) => current.get(name) === value);
-      chip.setAttribute("aria-current", String(matches));
-    }
   }
 }

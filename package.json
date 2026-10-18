@@ -11,6 +11,6 @@
   "scripts": {
     "test": "node --test",
     "serve": "node scripts/serve.mjs",
-    "fixture": "node scripts/corbellini-fixture.mjs"
+    "fixture": "node scripts/corbellini-fixture.mjs && node scripts/corbellini-reals-fixture.mjs"
   }
 }

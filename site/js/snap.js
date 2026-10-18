@@ -33,3 +33,43 @@ export function snapToCurve(curve, wanted, previous) {
   }
   return nearest(candidates, wanted);
 }
+
+const DECIMALS = 5;
+
+export function round5(value) {
+  const [mantissa, exponent = "0"] = String(value).split("e");
+  const shifted = Math.round(Number(`${mantissa}e${Number(exponent) + DECIMALS}`));
+  const [m, e = "0"] = String(shifted).split("e");
+  return Number(`${m}e${Number(e) - DECIMALS}`);
+}
+
+function signedOrdinate(curve, x, y, previousY) {
+  if (y > 0) return curve.y(x);
+  if (y < 0) return -curve.y(x);
+  return y >= previousY ? curve.y(x) : -curve.y(x);
+}
+
+export function snapToRealCurve(curve, wanted, previous) {
+  let [x, y] = wanted;
+  const [prevX, prevY] = previous;
+  if (Number.isNaN(x) || Number.isNaN(y)) return previous;
+  if (x === prevX && y === prevY) {
+    const valid = round5(curve.y(x));
+    if (y === (y < 0 ? -valid : valid)) return [x, y];
+  }
+  const roots = curve.roots();
+  if (x !== prevX) {
+    if (x < roots[0]) {
+      [x, y] = [roots[0], 0];
+    } else if (roots.length > 2 && roots[1] < x && x < roots[2]) {
+      [x, y] = [roots[x > prevX ? 2 : 1], 0];
+    } else {
+      y = signedOrdinate(curve, x, y, prevY);
+    }
+  } else {
+    const candidates = curve.xsAt(y);
+    const distances = candidates.map((candidate) => Math.abs(candidate - prevX));
+    x = candidates[distances.indexOf(Math.min(...distances))];
+  }
+  return [round5(x), round5(y)];
+}

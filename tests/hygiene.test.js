@@ -46,7 +46,7 @@ test("every page has the inputs the addition controller reads", () => {
       assert.match(html, new RegExp(`name="${name}"`), `${page} lacks input name="${name}" required by AdditionPage`);
     }
     for (const cls of ["curve-equation", "field-order", "curve-order", "curve-singular-warning", "composite-warning"]) {
-      assert.match(html, new RegExp(`class="${cls}"`), `${page} lacks .${cls}, AdditionPage.render writes into it`);
+      assert.match(html, new RegExp(`class="[^"]*\\b${cls}\\b`), `${page} lacks .${cls}, AdditionPage.render writes into it`);
     }
   }
 });
@@ -63,5 +63,26 @@ test("every page links to the project repository on GitHub", () => {
       readFileSync(page, "utf8"), /href="https:\/\/github\.com\/Evgeniy347\/maga-curve-web"/,
       `${page} must link to github.com/Evgeniy347/maga-curve-web so readers find the source`,
     );
+  }
+});
+
+const PAGES = ["index.html", "montgomery-add.html", "modk-add.html"];
+
+test("the word «игрушечная» is gone from every page: the thesis curve is not called a toy", () => {
+  for (const page of PAGES) {
+    assert.doesNotMatch(readFileSync(join(SITE, page), "utf8"), /грушечн/i, `${page} still calls the thesis curve «игрушечная»`);
+  }
+});
+
+test("every page is Russian, mobile-ready and shares one navigation", () => {
+  const navOf = (html) => [...html.matchAll(/<nav[\s\S]*?<\/nav>/g)][0][0].replace(/ aria-current="page"/g, "");
+  const reference = navOf(readFileSync(join(SITE, PAGES[0]), "utf8"));
+  for (const page of PAGES) {
+    const html = readFileSync(join(SITE, page), "utf8");
+    assert.match(html, /<html lang="ru">/, `${page}: the site is Russian-only`);
+    assert.match(html, /name="viewport"/, `${page}: without a viewport meta phones render the desktop layout at ~0.5 scale`);
+    assert.match(html, /data-theme-toggle/, `${page}: dark theme is switched by a toggle in the top bar`);
+    assert.equal(navOf(html), reference, `${page}: navigation differs from index.html`);
+    assert.doesNotMatch(html, /reals-add|reals-mul|modk-mul/, `${page}: links to Corbellini's ℝ and multiplication pages were removed from the menu`);
   }
 });

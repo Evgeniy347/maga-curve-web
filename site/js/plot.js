@@ -1,21 +1,22 @@
-export const COLORS = {
-  red: "#cb4b4b",
-  yellow: "#edc240",
-  blue: "#afd8f8",
-};
+const SVG_NS = "http://www.w3.org/2000/svg";
 
-const STYLE = {
-  tickColor: "rgba(84, 84, 84, 0.22)",
-  borderColor: "rgba(84, 84, 84, 0.8)",
-  labelColor: "#545454",
-  lineWidth: 2,
-  offset: { left: 34, right: 10, top: 10, bottom: 28 },
-  font: "15px 'Source Sans Pro', sans-serif",
+const LAYOUT = {
+  view: 560,
+  left: 44,
+  top: 16,
+  size: 496,
+  padding: 0.6,
+  tickGap: 22,
+  tickLabelGap: 10,
+  badgeRadius: 13,
+  thirdRadius: 8,
   ticksPerPixelRoot: 0.3,
 };
 
+const POINT_RADIUS = { max: 3.6, min: 1.2, budget: 104 };
+
 export function tickSize(min, max, pixels) {
-  const delta = (max - min) / (STYLE.ticksPerPixelRoot * Math.sqrt(pixels));
+  const delta = (max - min) / (LAYOUT.ticksPerPixelRoot * Math.sqrt(pixels));
   const magnitude = 10 ** Math.floor(Math.log10(delta));
   const norm = delta / magnitude;
   if (norm < 1.5) return magnitude;
@@ -29,149 +30,147 @@ export function ticks(min, max, pixels) {
   const size = tickSize(min, max, pixels);
   const result = [];
   for (let value = Math.ceil(min / size) * size; value <= max + 1e-9; value += size) {
-    result.push(Number(value.toFixed(10)));
+    result.push(Number(value.toFixed(10)) || 0);
   }
   return result;
 }
 
+export function plotRange(p) {
+  return { xMin: -LAYOUT.padding, xMax: p - 1 + LAYOUT.padding, yMin: -LAYOUT.padding, yMax: p - 1 + LAYOUT.padding };
+}
+
+export function pointRadius(p) {
+  return Math.min(POINT_RADIUS.max, Math.max(POINT_RADIUS.min, POINT_RADIUS.budget / p));
+}
+
+export function segments(polyline) {
+  const result = [[]];
+  for (const point of polyline) {
+    if (point === null) result.push([]);
+    else result.at(-1).push(point);
+  }
+  return result.filter((segment) => segment.length > 1);
+}
+
+function element(tag, attributes = {}, children = []) {
+  const node = document.createElementNS(SVG_NS, tag);
+  for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, String(value));
+  node.append(...children);
+  return node;
+}
+
+function title(text) {
+  return element("title", {}, [text]);
+}
+
+function round(value) {
+  return Math.round(value * 10) / 10;
+}
+
+let instances = 0;
+
 export class Plot {
   constructor(container) {
+    instances += 1;
+    this.id = `plot-${instances}`;
     this.container = container;
-    this.canvas = document.createElement("canvas");
-    this.canvas.className = "plot-canvas";
-    container.append(this.canvas);
-    this.labels = new Map();
-  }
-
-  size() {
-    return { width: this.container.clientWidth, height: this.container.clientHeight };
-  }
-
-  area() {
-    const { width, height } = this.size();
-    const { left, right, top, bottom } = STYLE.offset;
-    return { left, top, width: width - left - right, height: height - top - bottom };
   }
 
   toPixel([x, y]) {
     const { range } = this;
-    const area = this.area();
+    const { left, top, size } = LAYOUT;
     return [
-      area.left + ((x - range.xMin) / (range.xMax - range.xMin)) * area.width,
-      area.top + ((range.yMax - y) / (range.yMax - range.yMin)) * area.height,
+      round(left + ((x - range.xMin) / (range.xMax - range.xMin)) * size),
+      round(top + ((range.yMax - y) / (range.yMax - range.yMin)) * size),
     ];
   }
 
-  prepareContext() {
-    const { width, height } = this.size();
-    const ratio = window.devicePixelRatio || 1;
-    this.canvas.width = width * ratio;
-    this.canvas.height = height * ratio;
-    this.canvas.style.width = `${width}px`;
-    this.canvas.style.height = `${height}px`;
-    const context = this.canvas.getContext("2d");
-    context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    context.clearRect(0, 0, width, height);
-    return context;
+  render({ p, points, chord, P, Q, R, third, caption, description }) {
+    this.range = plotRange(p);
+    const { view, left, top, size } = LAYOUT;
+    const clip = `${this.id}-clip`;
+    const svg = element("svg", {
+      class: "plot-svg",
+      viewBox: `0 0 ${view} ${view}`,
+      role: "img",
+      "aria-labelledby": `${this.id}-t ${this.id}-d`,
+    }, [
+      element("title", { id: `${this.id}-t` }, [caption]),
+      element("desc", { id: `${this.id}-d` }, [description]),
+      element("defs", {}, [element("clipPath", { id: clip }, [element("rect", { x: left, y: top, width: size, height: size })])]),
+      element("rect", { class: "plot-bg", x: left, y: top, width: size, height: size, rx: 4 }),
+      this.grid(),
+      element("g", { "clip-path": `url(#${clip})` }, [
+        this.chordPaths(chord),
+        this.reflection(R, third),
+        this.curvePoints(points, pointRadius(p)),
+        this.thirdPoint(R, third),
+      ]),
+      this.badge("P", "is-p", P),
+      this.badge("Q", "is-q", Q),
+      this.badge("R", "is-r", R),
+    ]);
+    this.container.replaceChildren(svg);
   }
 
-  draw(range, series) {
-    this.range = range;
-    const context = this.prepareContext();
-    this.drawGrid(context);
-    const area = this.area();
-    context.save();
-    context.beginPath();
-    context.rect(area.left, area.top, area.width, area.height);
-    context.clip();
-    for (const item of series) {
-      if (item.lines) this.drawLines(context, item);
-      if (item.points) this.drawPoints(context, item);
-    }
-    context.restore();
-  }
-
-  drawGrid(context) {
-    const area = this.area();
+  grid() {
+    const { left, top, size, tickGap, tickLabelGap } = LAYOUT;
     const { range } = this;
-    context.lineWidth = 1;
-    context.strokeStyle = STYLE.tickColor;
-    context.fillStyle = STYLE.labelColor;
-    context.font = STYLE.font;
-    context.textAlign = "center";
-    context.textBaseline = "top";
-    for (const value of ticks(range.xMin, range.xMax, area.width)) {
-      const [px] = this.toPixel([value, range.yMin]);
-      this.strokeSegment(context, [px, area.top], [px, area.top + area.height]);
-      context.fillText(String(value), px, area.top + area.height + 6);
+    const lines = [];
+    const labels = [];
+    for (const value of ticks(range.xMin, range.xMax, size)) {
+      const [x] = this.toPixel([value, 0]);
+      lines.push(element("line", { x1: x, y1: top, x2: x, y2: top + size }));
+      labels.push(element("text", { x, y: top + size + tickGap, "text-anchor": "middle" }, [String(value)]));
     }
-    context.textAlign = "right";
-    context.textBaseline = "middle";
-    for (const value of ticks(range.yMin, range.yMax, area.height)) {
-      const [, py] = this.toPixel([range.xMin, value]);
-      this.strokeSegment(context, [area.left, py], [area.left + area.width, py]);
-      context.fillText(String(value), area.left - 6, py);
+    for (const value of ticks(range.yMin, range.yMax, size)) {
+      const [, y] = this.toPixel([0, value]);
+      lines.push(element("line", { x1: left, y1: y, x2: left + size, y2: y }));
+      labels.push(element("text", { x: left - tickLabelGap, y: y + 4, "text-anchor": "end" }, [String(value)]));
     }
-    context.strokeStyle = STYLE.borderColor;
-    context.lineWidth = STYLE.lineWidth;
-    context.strokeRect(area.left, area.top, area.width, area.height);
+    return element("g", {}, [element("g", { class: "plot-grid" }, lines), element("g", { class: "plot-ticks" }, labels)]);
   }
 
-  strokeSegment(context, [x1, y1], [x2, y2]) {
-    context.beginPath();
-    context.moveTo(Math.round(x1) + 0.5, Math.round(y1) + 0.5);
-    context.lineTo(Math.round(x2) + 0.5, Math.round(y2) + 0.5);
-    context.stroke();
+  chordPaths(chord) {
+    const paths = segments(chord).map((segment) => {
+      const d = segment.map((point, i) => `${i === 0 ? "M" : "L"}${this.toPixel(point).join(" ")}`).join("");
+      return element("path", { d });
+    });
+    return element("g", { class: "plot-chord" }, paths);
   }
 
-  drawLines(context, { color, data }) {
-    context.strokeStyle = color;
-    context.lineWidth = STYLE.lineWidth;
-    context.beginPath();
-    let penDown = false;
-    for (const point of data) {
-      if (point === null) {
-        penDown = false;
-        continue;
-      }
-      const [px, py] = this.toPixel(point);
-      if (penDown) context.lineTo(px, py);
-      else context.moveTo(px, py);
-      penDown = true;
-    }
-    context.stroke();
+  curvePoints(points, radius) {
+    const circles = points.map((point) => {
+      const [cx, cy] = this.toPixel(point);
+      return element("circle", { cx, cy, r: radius }, [title(`(${point[0]}, ${point[1]})`)]);
+    });
+    return element("g", { class: "plot-points" }, circles);
   }
 
-  drawPoints(context, { color, data, points }) {
-    context.strokeStyle = color;
-    context.fillStyle = "#ffffff";
-    context.lineWidth = STYLE.lineWidth;
-    for (const point of data) {
-      const [px, py] = this.toPixel(point);
-      context.beginPath();
-      context.arc(px, py, points.radius, 0, 2 * Math.PI);
-      context.fill();
-      context.stroke();
-    }
+  reflection(R, third) {
+    if (!R || !third || R[1] === third[1]) return element("g");
+    const [x1, y1] = this.toPixel(third);
+    const [x2, y2] = this.toPixel(R);
+    return element("line", { class: "plot-reflect", x1, y1, x2, y2 });
   }
 
-  setLabel(name, color, point) {
-    if (!this.labels.has(name)) {
-      const label = document.createElement("label");
-      label.className = "point-label";
-      label.textContent = name;
-      label.style.backgroundColor = color;
-      this.container.append(label);
-      this.labels.set(name, label);
-    }
-    const label = this.labels.get(name);
-    if (!point) {
-      label.style.display = "none";
-      return;
-    }
-    const [px, py] = this.toPixel(point);
-    label.style.display = "block";
-    label.style.left = `${px}px`;
-    label.style.top = `${py}px`;
+  thirdPoint(R, third) {
+    if (!R || !third || R[1] === third[1]) return element("g");
+    const [x, y] = this.toPixel(third);
+    return element("g", { class: "plot-third", transform: `translate(${x} ${y})` }, [
+      element("circle", { r: LAYOUT.thirdRadius }),
+      element("text", { x: 12, y: -8 }, ["−R"]),
+      title(`−R = (${third[0]}, ${third[1]}) — третья точка на секущей`),
+    ]);
+  }
+
+  badge(name, role, point) {
+    if (!point) return element("g");
+    const [x, y] = this.toPixel(point);
+    return element("g", { class: `badge ${role}`, transform: `translate(${x} ${y})` }, [
+      element("circle", { r: LAYOUT.badgeRadius }),
+      element("text", { y: 4.5, "text-anchor": "middle" }, [name]),
+      title(`${name} = (${point[0]}, ${point[1]})`),
+    ]);
   }
 }

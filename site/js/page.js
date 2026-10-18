@@ -1,14 +1,16 @@
 import { INFINITY } from "./curve.js";
 import { lineThrough } from "./chord.js";
-import { COLORS, Plot } from "./plot.js";
+import { largestPrimeFactor, mod } from "./field.js";
+import { Plot, plotRange } from "./plot.js";
 import { snapToCurve } from "./snap.js";
 
+const LINE_KINDS = { tangent: "касательная", vertical: "вертикаль" };
 const QUERY_NAME = /^[a-z]+$/;
 const QUERY_VALUE = /^[-.0-9]+$/;
 
 export function queryValues(search) {
   const values = new Map();
-  for (const item of search.replace(/^\?/, "").split("&")) {
+  for (const item of search.replace(/^.*\?/, "").split("&")) {
     const parts = item.split("=");
     if (parts.length !== 2) continue;
     const [name, value] = parts;
@@ -18,15 +20,55 @@ export function queryValues(search) {
 }
 
 export function term(value, suffix) {
-  if (value > 0) return ` + ${value}${suffix}`;
-  if (value < 0) return ` − ${-value}${suffix}`;
+  if (value > 0) return ` + ${value === 1 && suffix ? "" : value}${suffix}`;
+  if (value < 0) return ` − ${value === -1 && suffix ? "" : -value}${suffix}`;
   return "";
 }
 
 export function formatCoordinate(point, index) {
-  if (point === INFINITY) return "Inf";
-  if (point === undefined) return "NaN";
+  if (point === INFINITY) return "∞";
+  if (point === undefined) return "—";
   return String(point[index]);
+}
+
+export function formatPoint(point) {
+  if (point === INFINITY) return "∞";
+  if (point === undefined) return "не определено";
+  return `(${point[0]}, ${point[1]})`;
+}
+
+export function lineEquation(trace, first, p) {
+  if (trace.lambda === undefined) return `x = ${first[0]}`;
+  const slope = trace.lambda.value;
+  const intercept = mod(first[1] - slope * first[0], p);
+  const slopeTerm = slope === 0 ? "" : `${slope === 1 ? "" : slope}x`;
+  const parts = [slopeTerm, intercept === 0 && slopeTerm ? "" : String(intercept)].filter(Boolean);
+  return `y ≡ ${parts.join(" + ")} (mod ${p})`;
+}
+
+export function groupStructure(order) {
+  const subgroup = largestPrimeFactor(order);
+  return { subgroup, cofactor: order / subgroup };
+}
+
+export function buildScene(curve, P, Q, trace = curve.addTrace(P, Q)) {
+  const R = trace.result;
+  const { p } = curve;
+  const third = R ? curve.neg(R) : null;
+  const line = lineEquation(trace, P, p);
+  const lineKind = LINE_KINDS[trace.kind] ?? "секущая";
+  const scene = {
+    p,
+    points: curve.points(),
+    chord: lineThrough(trace, P, p, plotRange(p)),
+    P,
+    Q,
+    R,
+    third,
+    caption: `График: R = P + Q на кривой над 𝔽${p}`,
+    description: `Точки кривой над F_${p}: ${curve.points().length} аффинных точек. ${lineKind} ${line} через P = ${formatPoint(P)} и Q = ${formatPoint(Q)}; R = ${formatPoint(R)}.`,
+  };
+  return { scene, third, line, lineKind };
 }
 
 class PointInput {
@@ -95,29 +137,51 @@ export class AdditionPage {
 
   render({ coefficients, curve, P, Q, trace }) {
     const R = trace.result;
-    const p = curve.p;
-    const range = { xMin: 0, xMax: p - 1, yMin: 0, yMax: p - 1 };
-    const series = [{ color: COLORS.blue, data: curve.points(), points: { radius: 3 } }];
-    if (R) {
-      series.push({ color: COLORS.red, data: [R, [R[0], p - R[1]]], lines: true });
-      series.push({ color: COLORS.red, data: [R], points: { radius: 5 } });
-    }
-    series.push({ color: COLORS.yellow, data: lineThrough(trace, P, p, range), lines: true });
-    series.push({ color: COLORS.yellow, data: [P, Q], points: { radius: 5 } });
-    this.plot.draw(range, series);
-    this.plot.setLabel("P", COLORS.yellow, P);
-    this.plot.setLabel("Q", COLORS.yellow, Q);
-    this.plot.setLabel("R", COLORS.red, R);
+    const { p } = curve;
+    const { scene, third, line, lineKind } = buildScene(curve, P, Q, trace);
+    this.plot.render(scene);
     this.rx.value = formatCoordinate(R, 0);
     this.ry.value = formatCoordinate(R, 1);
-    this.root.querySelector(".curve-equation").innerHTML = this.form.equation(coefficients);
-    this.root.querySelector(".field-order").textContent = p;
-    this.root.querySelector(".curve-order").textContent = curve.order();
+    const { subgroup, cofactor } = groupStructure(curve.order());
+    this.text(".curve-equation", null).innerHTML = this.form.equation(coefficients);
+    this.text(".field-order", p);
+    this.text(".curve-order", curve.order());
+    this.text(".curve-order-factor", `= ${cofactor}·${subgroup}`);
+    this.text(".subgroup-order", subgroup);
+    this.text(".cofactor", cofactor);
+    this.text(".legend-points", `${curve.points().length} точек кривой (+ ∞)`);
+    this.text(".legend-line", `${lineKind} ${line}`);
+    this.text(".sum-p", formatPoint(P));
+    this.text(".sum-q", formatPoint(Q));
+    this.text(".sum-r", formatPoint(R));
+    this.text(".steps-modulus", p);
+    for (const [selector, point] of [[".point-order-p", P], [".point-order-q", Q], [".point-order-r", R]]) {
+      this.text(selector, point === undefined ? "—" : curve.pointOrder(point) ?? "—");
+    }
+    this.toggle(".legend-third", Boolean(R) && R[1] !== third[1]);
     this.toggle(".curve-singular-warning", curve.isSingular());
     this.toggle(".composite-warning", !curve.isFieldPrime());
+    this.markPreset();
+  }
+
+  text(selector, value) {
+    const node = this.root.querySelector(selector);
+    if (node && value !== null) node.textContent = String(value);
+    return node;
   }
 
   toggle(selector, visible) {
-    this.root.querySelector(selector).style.display = visible ? "block" : "none";
+    const node = this.root.querySelector(selector);
+    if (node) node.style.display = visible ? "" : "none";
+    if (node && visible && node.classList.contains("alert")) node.style.display = "flex";
+  }
+
+  markPreset() {
+    const current = new Map([...this.root.querySelectorAll("#form input:not([readonly])")].map((input) => [input.name, input.value]));
+    for (const chip of this.root.querySelectorAll("a.chip[href*='?']")) {
+      const preset = queryValues(chip.getAttribute("href"));
+      const matches = [...preset].every(([name, value]) => current.get(name) === value);
+      chip.setAttribute("aria-current", String(matches));
+    }
   }
 }

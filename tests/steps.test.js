@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { montgomery } from "../site/js/curve.js";
-import { additionSteps, reduction } from "../site/js/steps.js";
+import { montgomery, weierstrass } from "../site/js/curve.js";
+import { additionStages, additionSteps, reduction, stepText } from "../site/js/steps.js";
 
 const curve = montgomery({ A: 6, B: 1, p: 29 });
 
@@ -60,5 +60,41 @@ test("P + (−P) ends with infinity in one line", () => {
   assert.deepEqual(
     additionSteps(curve, [9, 8], [9, 21]), ["x₁ = x₂ = 9, y₁ = −y₂ → прямая вертикальна, P + Q = ∞"],
     "opposite points give a vertical line and no third intersection",
+  );
+});
+
+test("stages group the narration as slope → x₃ → y₃ and end with a check that R is on the curve", () => {
+  const { stages, check } = additionStages(curve, [2, 11], [7, 8]);
+  assert.deepEqual(
+    stages.map((stage) => stage.title), ["Наклон секущей λ", "Абсцисса x₃", "Ордината y₃"],
+    "the steps panel shows three stages, each ending with the value it defines",
+  );
+  assert.deepEqual(stages.map((stage) => stage.steps.at(-1).value), [11, 19, 5], "λ = 11, x₃ = 19, y₃ = 5");
+  assert.equal(stepText(check.left, 29), "y₃² = 5² = 25", "left side of the curve equation at R = (19, 5)");
+  assert.equal(
+    stepText(check.right, 29), "x₃³ + 6x₃² + x₃ = 19³ + 6·19² + 19 = 9044 = 311·29 + 25 → 25",
+    "right side x³ + 6x² + x at x₃ = 19 must also reduce to 25",
+  );
+  assert.equal(check.holds, true, "R = (19, 5) satisfies y² = x³ + 6x² + x over F_29");
+});
+
+test("a doubling is narrated as a tangent stage", () => {
+  const { stages } = additionStages(curve, [9, 8], [9, 8]);
+  assert.equal(stages[0].title, "Наклон касательной λ", "P = Q uses the tangent slope");
+  assert.equal(stages[0].formula, "λ = (3x² + 2Ax + 1)·(2y)⁻¹", "Montgomery tangent: (3x² + 2Ax + 1)/(2By) with B = 1");
+});
+
+test("Weierstrass narration has no phantom A = 0 terms and names coefficients a, b", () => {
+  const names = { A: "A", B: "B", C: "a", D: "b" };
+  const W = weierstrass({ a: 18, b: 14, p: 29 });
+  const chord = additionStages(W, [4, 11], [9, 8], names);
+  assert.equal(chord.stages[1].formula, "x₃ = λ² − x₁ − x₂", "y² = x³ + ax + b has A = 0, so x₃ = λ² − x₁ − x₂");
+  assert.deepEqual(chord.trace.result, [21, 5], "the isomorphic image of (19, 5)");
+  assert.equal(stepText(chord.check.right, 29).split(" = ")[0], "x₃³ + 18x₃ + 14", "right side uses the actual a = 18, b = 14");
+  const tangent = additionStages(W, [4, 11], [4, 11], names);
+  assert.equal(tangent.stages[0].formula, "λ = (3x² + a)·(2y)⁻¹", "Weierstrass tangent slope is (3x² + a)/(2y)");
+  assert.ok(
+    tangent.stages[0].steps.every((item) => !item.label.includes("2Ax")),
+    "no 2Ax step when A = 0: it would show a meaningless 2·0·x",
   );
 });

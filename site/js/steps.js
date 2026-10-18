@@ -1,6 +1,7 @@
 import { mod } from "./field.js";
 
 const MINUS = "−";
+const DEFAULT_NAMES = { A: "A", B: "B", C: "C", D: "D" };
 
 function signed(value) {
   return value < 0 ? `${MINUS}${-value}` : String(value);
@@ -8,6 +9,10 @@ function signed(value) {
 
 function difference(...terms) {
   return terms.join(` ${MINUS} `);
+}
+
+function sum(...terms) {
+  return terms.join(" + ");
 }
 
 export function reduction(raw, p) {
@@ -18,53 +23,137 @@ export function reduction(raw, p) {
   return `${signed(raw)} + ${wraps === 1 ? "" : `${wraps}·`}${p} = ${value}`;
 }
 
-function chordSteps(trace, [x1, y1], [x2, y2], p) {
-  return [
-    `y₂ ${MINUS} y₁ = ${difference(y2, y1)} = ${reduction(trace.numerator.raw, p)}`,
-    `x₂ ${MINUS} x₁ = ${difference(x2, x1)} = ${reduction(trace.denominator.raw, p)}`,
-  ];
+export function reductionTail(raw, p) {
+  const value = mod(raw, p);
+  if (raw >= 0 && raw < p) return [];
+  if (raw >= p) return [String(raw), `${Math.floor(raw / p)}·${p} + ${value}`];
+  const wraps = (value - raw) / p;
+  return [`${signed(raw)} + ${wraps === 1 ? "" : `${wraps}·`}${p}`];
 }
 
-function tangentSteps(curve, trace, [x, y]) {
+function step(label, forms, raw, p) {
+  return { label, forms, raw, value: mod(raw, p) };
+}
+
+export function stepText(item, p) {
+  return [item.label, ...item.forms, reduction(item.raw, p)].join(" = ");
+}
+
+function cubicLabel(curve, variable) {
+  const { A, C, D } = curve;
+  const terms = [`${variable}³`];
+  if (A !== 0) terms.push(`${A === 1 ? "" : A}${variable}²`);
+  if (C !== 0) terms.push(`${C === 1 ? "" : C}${variable}`);
+  if (D !== 0) terms.push(String(D));
+  return sum(...terms);
+}
+
+function cubicNumbers(curve, x) {
+  const terms = [`${x}³`];
+  if (curve.A !== 0) terms.push(`${curve.A}·${x}²`);
+  if (curve.C === 1) terms.push(String(x));
+  else if (curve.C !== 0) terms.push(`${curve.C}·${x}`);
+  if (curve.D !== 0) terms.push(String(curve.D));
+  return sum(...terms);
+}
+
+function chordStage(trace, [x1, y1], [x2, y2], p) {
+  return {
+    title: "Наклон секущей λ",
+    formula: `λ = (y₂ ${MINUS} y₁)·(x₂ ${MINUS} x₁)⁻¹`,
+    steps: [
+      step(`y₂ ${MINUS} y₁`, [difference(y2, y1)], trace.numerator.raw, p),
+      step(`x₂ ${MINUS} x₁`, [difference(x2, x1)], trace.denominator.raw, p),
+    ],
+  };
+}
+
+function tangentStage(curve, trace, [x, y], names) {
   const { p, A, B, C } = curve;
-  const free = C === 1 ? "1" : "C";
-  const doubled = B === 1 ? ["2y", `2·${y}`] : ["2By", `2·${B}·${y}`];
-  return [
-    `3x² = 3·${x}² = 3·${x * x} = ${reduction(trace.threeXSquared.raw, p)}`,
-    `2Ax = 2·${A}·${x} = ${reduction(trace.twoAX.raw, p)}`,
-    `числитель = 3x² + 2Ax + ${free} = ${trace.threeXSquared.value} + ${trace.twoAX.value} + ${C} = ${reduction(trace.numerator.raw, p)}`,
-    `знаменатель = ${doubled[0]} = ${doubled[1]} = ${reduction(trace.denominator.raw, p)}`,
-  ];
+  const numeratorLabel = ["3x²", A === 0 ? null : `2${names.A}x`, C === 0 ? null : C === 1 ? "1" : names.C].filter(Boolean);
+  const numeratorValues = [trace.threeXSquared.value, A === 0 ? null : trace.twoAX.value, C === 0 ? null : C].filter((v) => v !== null);
+  const doubled = B === 1 ? ["2y", `2·${y}`] : [`2${names.B}y`, `2·${B}·${y}`];
+  const steps = [step("3x²", [`3·${x}²`, `3·${x * x}`], trace.threeXSquared.raw, p)];
+  if (A !== 0) steps.push(step(`2${names.A}x`, [`2·${A}·${x}`], trace.twoAX.raw, p));
+  steps.push(
+    step("числитель", [sum(...numeratorLabel), sum(...numeratorValues)], trace.numerator.raw, p),
+    step("знаменатель", doubled, trace.denominator.raw, p),
+  );
+  return {
+    title: "Наклон касательной λ",
+    formula: `λ = (${sum(...numeratorLabel)})·(${doubled[0]})⁻¹`,
+    steps,
+  };
 }
 
-function slopeSteps(curve, trace, [x1, y1], [x2]) {
+function x3Stage(curve, trace, [x1], [x2], names) {
   const { p, A, B } = curve;
-  const lambda = trace.lambda.value;
-  const scaledSquare = B === 1 ? ["λ²", `${trace.lambdaSquared.value}`] : ["B·λ²", `${B}·${trace.lambdaSquared.value}`];
-  return [
-    `${trace.denominator.value}⁻¹ = ${trace.inverse}`,
-    `λ = ${trace.numerator.value}·${trace.inverse} = ${reduction(trace.lambda.raw, p)}`,
-    `λ² = ${lambda}² = ${reduction(trace.lambdaSquared.raw, p)}`,
-    `x₃ = ${difference(scaledSquare[0], "A", "x₁", "x₂")} = ${difference(scaledSquare[1], A, x1, x2)} = ${reduction(trace.x3.raw, p)}`,
-    `x₁ ${MINUS} x₃ = ${difference(x1, trace.x3.value)} = ${reduction(trace.xDifference.raw, p)}`,
-    `λ·(x₁ ${MINUS} x₃) = ${lambda}·${trace.xDifference.value} = ${reduction(trace.product.raw, p)}`,
-    `y₃ = ${difference(trace.product.value, y1)} = ${reduction(trace.y3.raw, p)}`,
-  ];
+  const square = B === 1 ? ["λ²", String(trace.lambdaSquared.value)] : [`${names.B}·λ²`, `${B}·${trace.lambdaSquared.value}`];
+  const symbols = [square[0], A === 0 ? null : names.A, "x₁", "x₂"].filter(Boolean);
+  const numbers = [square[1], A === 0 ? null : A, x1, x2].filter((v) => v !== null);
+  const formula = difference(...symbols);
+  return {
+    title: "Абсцисса x₃",
+    formula: `x₃ = ${formula}`,
+    steps: [
+      step("λ²", [`${trace.lambda.value}²`], trace.lambdaSquared.raw, p),
+      step("x₃", [formula, difference(...numbers)], trace.x3.raw, p),
+    ],
+  };
 }
 
-function verticalStep(first, second) {
+function y3Stage(trace, [x1, y1], p) {
+  return {
+    title: "Ордината y₃",
+    formula: `y₃ = λ·(x₁ ${MINUS} x₃) ${MINUS} y₁`,
+    steps: [
+      step(`x₁ ${MINUS} x₃`, [difference(x1, trace.x3.value)], trace.xDifference.raw, p),
+      step(`λ·(x₁ ${MINUS} x₃)`, [`${trace.lambda.value}·${trace.xDifference.value}`], trace.product.raw, p),
+      step("y₃", [difference(trace.product.value, y1)], trace.y3.raw, p),
+    ],
+  };
+}
+
+function checkStage(curve, [x3, y3], names) {
+  const { p, A, B, C, D } = curve;
+  const leftLabel = B === 1 ? "y₃²" : `${names.B}·y₃²`;
+  const leftForm = B === 1 ? `${y3}²` : `${B}·${y3}²`;
+  const rightRaw = x3 ** 3 + A * x3 * x3 + C * x3 + D;
+  return {
+    left: step(leftLabel, [leftForm], B * y3 * y3, p),
+    right: step(cubicLabel(curve, "x₃"), [cubicNumbers(curve, x3)], rightRaw, p),
+    holds: curve.contains([x3, y3]),
+  };
+}
+
+function verticalMessage(first, second) {
   const [x1, y1] = first;
-  if (y1 === second[1]) return [`касательная в точке (${x1}, ${y1}) вертикальна → P + Q = 2P = ∞`];
-  return [`x₁ = x₂ = ${x1}, y₁ = ${MINUS}y₂ → прямая вертикальна, P + Q = ∞`];
+  if (y1 === second[1]) return `касательная в точке (${x1}, ${y1}) вертикальна → P + Q = 2P = ∞`;
+  return `x₁ = x₂ = ${x1}, y₁ = ${MINUS}y₂ → прямая вертикальна, P + Q = ∞`;
 }
 
-export function additionSteps(curve, first, second) {
+export function additionStages(curve, first, second, names = DEFAULT_NAMES) {
   const trace = curve.addTrace(first, second);
-  if (trace.kind === "identity") return ["одно из слагаемых — ∞, сумма равна другому слагаемому"];
-  if (trace.kind === "vertical") return verticalStep(first, second);
-  const opening = trace.kind === "tangent" ? tangentSteps(curve, trace, first) : chordSteps(trace, first, second, curve.p);
+  const p = curve.p;
+  if (trace.kind === "identity") return { trace, stages: [], message: "одно из слагаемых — ∞, сумма равна другому слагаемому" };
+  if (trace.kind === "vertical") return { trace, stages: [], message: verticalMessage(first, second) };
+  const opening = trace.kind === "tangent" ? tangentStage(curve, trace, first, names) : chordStage(trace, first, second, p);
   if (trace.kind === "non-invertible") {
-    return [...opening, `${trace.denominator.value} не обратим по модулю ${curve.p} (p составное) → сумма не определена`];
+    return { trace, stages: [opening], message: `${trace.denominator.value} не обратим по модулю ${p} (p составное) → сумма не определена` };
   }
-  return [...opening, ...slopeSteps(curve, trace, first, second)];
+  opening.steps.push(
+    step(`${trace.denominator.value}⁻¹`, [], trace.inverse, p),
+    step("λ", [`${trace.numerator.value}·${trace.inverse}`], trace.lambda.raw, p),
+  );
+  return {
+    trace,
+    stages: [opening, x3Stage(curve, trace, first, second, names), y3Stage(trace, first, p)],
+    check: checkStage(curve, trace.result, names),
+  };
+}
+
+export function additionSteps(curve, first, second, names = DEFAULT_NAMES) {
+  const { stages, message } = additionStages(curve, first, second, names);
+  const lines = stages.flatMap((stage) => stage.steps.map((item) => stepText(item, curve.p)));
+  return message ? [...lines, message] : lines;
 }

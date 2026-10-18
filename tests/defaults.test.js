@@ -42,6 +42,13 @@ test("Weierstrass page opens on the same toy curve via X = x + A/3", () => {
   );
 });
 
-test("the site root opens the thesis curve page", () => {
-  assert.match(read("index.html"), /url=montgomery-add\.html/, "index.html must redirect to the Montgomery page with our defaults");
+test("the landing page leads to the thesis curve page and plots the same sum", async () => {
+  const html = read("index.html");
+  assert.match(html, /class="btn btn-primary" href="montgomery-add\.html"/, "the main call to action opens the Montgomery page");
+  const { THESIS_CURVE, THESIS_SUM } = await import("../site/js/landing.js");
+  assert.deepEqual(
+    [THESIS_CURVE.A, THESIS_CURVE.B, THESIS_CURVE.p, ...THESIS_SUM.P, ...THESIS_SUM.Q],
+    [montgomeryPage.a, montgomeryPage.b, montgomeryPage.p, montgomeryPage.px, montgomeryPage.py, montgomeryPage.qx, montgomeryPage.qy],
+    "the hero plot must show exactly the defaults of the Montgomery page",
+  );
 });

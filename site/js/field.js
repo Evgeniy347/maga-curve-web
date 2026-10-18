@@ -31,3 +31,15 @@ export function squareRoots(p) {
   }
   return roots;
 }
+
+export function largestPrimeFactor(n) {
+  let remaining = n;
+  let largest = 1;
+  for (let d = 2; d * d <= remaining; d += 1) {
+    while (remaining % d === 0) {
+      largest = d;
+      remaining /= d;
+    }
+  }
+  return remaining > 1 ? remaining : largest;
+}

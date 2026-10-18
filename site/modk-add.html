@@ -1,69 +1,87 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Elliptic Curve point addition (𝔽ₚ)</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,900,400italic,700italic,900italic&amp;subset=latin,latin-ext">
-    <link rel="stylesheet" href="css/ec.css">
-    <script type="module" src="js/modk-add.js"></script>
-  </head>
-  <body>
-    <header>
-      <h1>Elliptic Curve point addition (𝔽<sub>p</sub>)</h1>
-      <nav>
-        <ul>
-          <li class="field">ℝ</li>
-          <li><a href="https://andrea.corbellini.name/ecc/interactive/reals-add.html">Addition</a></li>
-          <li><a href="https://andrea.corbellini.name/ecc/interactive/reals-mul.html">Multiplication</a></li>
-          <li class="field">𝔽<sub>p</sub></li>
-          <li><a href="modk-add.html" class="active">Addition</a></li>
-          <li><a href="https://andrea.corbellini.name/ecc/interactive/modk-mul.html">Multiplication</a></li>
-          <li class="field">Монтгомери 𝔽<sub>p</sub></li>
-          <li><a href="montgomery-add.html">Сложение</a></li>
-        </ul>
-      </nav>
-    </header>
-    <main>
-      <div id="plot" class="box"></div>
-      <div class="box">
-        <div id="form">
-          <div class="parameters">
-            <p>Curve:</p>
-            <div class="parameter curve-coefficient"><label for="coefficient-a">a</label><input id="coefficient-a" name="a" value="18" type="number" step="1"></div>
-            <div class="parameter curve-coefficient"><label for="coefficient-b">b</label><input id="coefficient-b" name="b" value="14" type="number" step="1"></div>
-          </div>
-          <div class="parameters">
-            <p>Field:</p>
-            <div class="parameter curve-coefficient"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1"></div>
-            <div class="placeholder"></div>
-          </div>
-          <div class="parameters">
-            <p><em>P</em>:</p>
-            <div class="parameter point-coordinate"><label for="point-p-x">x</label><input id="point-p-x" name="px" value="4" type="number" step="1"></div>
-            <div class="parameter point-coordinate"><label for="point-p-y">y</label><input id="point-p-y" name="py" value="11" type="number" step="1"></div>
-          </div>
-          <div class="parameters">
-            <p><em>Q</em>:</p>
-            <div class="parameter point-coordinate"><label for="point-q-x">x</label><input id="point-q-x" name="qx" value="9" type="number" step="1"></div>
-            <div class="parameter point-coordinate"><label for="point-q-y">y</label><input id="point-q-y" name="qy" value="8" type="number" step="1"></div>
-          </div>
-          <div class="parameters">
-            <p><em>R</em> = <em>P</em> + <em>Q</em>:</p>
-            <div class="parameter point-coordinate result"><label for="point-r-x">x</label><input id="point-r-x" name="rx" readonly></div>
-            <div class="parameter point-coordinate result"><label for="point-r-y">y</label><input id="point-r-y" name="ry" readonly></div>
-          </div>
-        </div>
-        <div id="summary">
-          <p>Point addition over the elliptic curve <span class="curve-equation"></span> in 𝔽<sub class="field-order"></sub>.</p>
-          <p>The curve has <span class="curve-order"></span> points (including the point at infinity).</p>
-          <p class="curve-singular-warning"><strong>Warning:</strong> this curve is singular.</p>
-          <p class="composite-warning"><strong>Warning:</strong> <em>p</em> is not a prime.</p>
-        </div>
-      </div>
-    </main>
-    <footer>
-      <p>This tool is a re-implementation of the interactive page by Andrea Corbellini created for <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Elliptic Curve Cryptography: a gentle introduction</a> (<a href="https://github.com/andreacorbellini/ecc">original source</a>).</p>
-      <p>It's free software, released under the <a href="https://opensource.org/licenses/MIT">MIT license</a>, hosted on <a href="https://github.com/Evgeniy347/maga-curve-web">GitHub</a>.</p>
-    </footer>
-  </body>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сложение точек кривой Вейерштрасса</title>
+<meta name="description" content="Классическая форма y² = x³ + ax + b над 𝔽p: секущая по модулю, R = P + Q и ход вычисления по шагам. По умолчанию — кривая диссертации в форме Вейерштрасса.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,600&amp;display=swap">
+<link rel="stylesheet" href="css/site.css">
+<script src="js/theme.js"></script>
+<script type="module" src="js/modk-add.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">К содержимому</a>
+<header class="topbar"><div class="wrap">
+  <a class="brand" href="index.html"><svg class="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect x=".5" y=".5" width="27" height="27" rx="8" fill="var(--surface)" stroke="var(--border-strong)"/><g fill="var(--curve)"><circle cx="7" cy="19" r="1.4"/><circle cx="11" cy="9" r="1.4"/><circle cx="20" cy="21" r="1.4"/><circle cx="17" cy="7" r="1.4"/></g><path d="M5 23 13 5M15 23 23 5" stroke="var(--chord)" stroke-width="1.4"/><circle cx="9" cy="14.5" r="2.6" fill="var(--p)"/><circle cx="19.6" cy="14" r="2.6" fill="var(--r)"/></svg><span>Точки над <span class="bb">𝔽</span><sub>p</sub><small>к ВКР о Curve25519</small></span></a>
+  <button class="icon-btn menu-btn" type="button" aria-label="Меню" aria-expanded="false" aria-controls="nav" data-menu-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <nav class="nav" id="nav" aria-label="Разделы">
+    <a href="index.html">Главная</a>
+    <a href="montgomery-add.html">Монтгомери</a>
+    <a href="modk-add.html" aria-current="page">Вейерштрасс</a>
+    <span class="sep" aria-hidden="true"></span>
+    <a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a>
+    <a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a>
+    <button class="icon-btn" type="button" aria-label="Переключить тему" data-theme-toggle><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg></button>
+  </nav>
+</div></header>
+<main id="main" class="wrap">
+  <div class="page-head">
+    <div class="crumbs"><a href="index.html">Главная</a> / Вейерштрасс</div>
+    <h1>Сложение точек кривой Вейерштрасса</h1>
+    <p class="lead">Классическая форма <span class="m">y</span>² = <span class="m">x</span>³ + <span class="m">ax</span> + <span class="m">b</span>. По умолчанию открыта кривая диссертации после замены <span class="mono">X = x + 2</span> — шаги можно сравнить со страницей Монтгомери.</p>
+  </div>
+  <div class="tool">
+    <section class="card plot-card" aria-label="График">
+      <div class="plot-toolbar"><span class="eyebrow">Примеры</span><a class="chip" href="modk-add.html?a=18&amp;b=14&amp;p=29&amp;px=4&amp;py=11&amp;qx=9&amp;qy=8">P + Q</a><a class="chip" href="modk-add.html?a=18&amp;b=14&amp;p=29&amp;px=11&amp;py=8&amp;qx=11&amp;qy=8">[2]G</a><a class="chip" href="modk-add.html?a=18&amp;b=14&amp;p=29&amp;px=27&amp;py=17&amp;qx=11&amp;qy=8">[3]G = [2]G + G</a><a class="chip" href="modk-add.html?a=18&amp;b=14&amp;p=29&amp;px=11&amp;py=21&amp;qx=11&amp;qy=8">−G + G = ∞</a></div>
+      <div id="plot"></div>
+      <ul class="legend" aria-label="Легенда графика">
+        <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg><span class="legend-points"></span></li>
+        <li><svg viewBox="0 0 22 14" aria-hidden="true"><path d="M2 12 20 2" stroke="var(--chord)" stroke-width="2"/></svg><span class="legend-line mono"></span></li>
+        <li class="legend-third"><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="5" fill="none" stroke="var(--r)" stroke-width="2" stroke-dasharray="3 3"/></svg>третья точка −R, отражение −R → R</li>
+      </ul>
+      <p class="sum-line mono" aria-live="polite"><span class="sum-p" style="color:var(--p)"></span> + <span class="sum-q" style="color:var(--q)"></span> = <b class="sum-r"></b></p>
+    </section>
+    <div class="side">
+      <section class="card panel" aria-labelledby="curve-h">
+        <h2 id="curve-h">Кривая</h2>
+        <p class="equation"><span class="curve-equation"></span> над <span class="bb">𝔽</span><sub class="field-order"></sub></p>
+        <dl class="facts">
+          <div class="fact"><dt>Точек #<span class="m">E</span></dt><dd><span class="curve-order"></span> <small class="curve-order-factor"></small></dd></div>
+          <div class="fact"><dt>Подгруппа ℓ</dt><dd class="subgroup-order"></dd></div>
+          <div class="fact"><dt>Кофактор <span class="m">h</span></dt><dd class="cofactor"></dd></div>
+        </dl>
+        <p class="alert curve-singular-warning" role="alert">⚠ Кривая сингулярна: 4<span class="m">a</span><sup>3</sup> + 27<span class="m">b</span><sup>2</sup> ≡ 0 (mod <span class="m">p</span>).</p>
+        <p class="alert composite-warning" role="alert">⚠ <span><span class="m">p</span> не простое: в 𝔽<sub>p</sub> есть необратимые элементы, сумма может быть не определена.</span></p>
+      </section>
+      <section class="card panel" aria-labelledby="points-h">
+        <h2 id="points-h">Параметры и точки</h2>
+        <form id="form" onsubmit="return false">
+          <fieldset><legend>Коэффициенты и поле</legend><div class="row"><div class="field"><label for="coefficient-a">a</label><input id="coefficient-a" name="a" value="18" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-b">b</label><input id="coefficient-b" name="b" value="14" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1" min="2" inputmode="numeric"></div></div></fieldset>
+          <fieldset><legend><span class="dot" style="background:var(--p)"></span>Точка <span class="m">P</span> <span class="hint">· порядок <b class="mono point-order-p"></b></span></legend><div class="row two">
+            <div class="field is-p"><label for="point-p-x">x</label><input id="point-p-x" name="px" value="4" type="number" step="1" inputmode="numeric"></div>
+            <div class="field is-p"><label for="point-p-y">y</label><input id="point-p-y" name="py" value="11" type="number" step="1" inputmode="numeric"></div></div></fieldset>
+          <fieldset><legend><span class="dot" style="background:var(--q)"></span>Точка <span class="m">Q</span> <span class="hint">· порядок <b class="mono point-order-q"></b></span></legend><div class="row two">
+            <div class="field is-q"><label for="point-q-x">x</label><input id="point-q-x" name="qx" value="9" type="number" step="1" inputmode="numeric"></div>
+            <div class="field is-q"><label for="point-q-y">y</label><input id="point-q-y" name="qy" value="8" type="number" step="1" inputmode="numeric"></div></div></fieldset>
+          <p class="hint">Если введённая точка не лежит на кривой, она сдвигается к ближайшей точке кривой.</p>
+          <fieldset><legend><span class="dot" style="background:var(--r)"></span>Сумма <span class="m">R</span> = <span class="m">P</span> + <span class="m">Q</span> <span class="hint">· порядок <b class="mono point-order-r"></b></span></legend><div class="row two">
+            <div class="field is-r"><label for="point-r-x">x</label><input id="point-r-x" name="rx" readonly aria-readonly="true"></div>
+            <div class="field is-r"><label for="point-r-y">y</label><input id="point-r-y" name="ry" readonly aria-readonly="true"></div></div></fieldset>
+        </form>
+      </section>
+      <section class="card panel" id="steps" aria-labelledby="steps-h">
+        <h2 id="steps-h">Ход вычисления · по модулю <span class="steps-modulus"></span></h2>
+        <ol class="steps-list"></ol>
+      </section>
+      <div class="callout"><span aria-hidden="true">⇄</span><p><b>Изоморфна кривой Монтгомери из диссертации.</b> <span class="mono">x = X − 2</span>: <span class="m">P</span> = (4, 11) ↔ (2, 11), <span class="m">Q</span> = (9, 8) ↔ (7, 8), <span class="m">R</span> = (21, 5) ↔ (19, 5). <a href="montgomery-add.html">Открыть форму Монтгомери →</a></p></div>
+    </div>
+  </div>
+</main>
+<footer class="footer"><div class="wrap">
+  <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ).</p>
+  <p><a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страница Вейерштрасса основана на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
+</div></footer>
+</body>
 </html>

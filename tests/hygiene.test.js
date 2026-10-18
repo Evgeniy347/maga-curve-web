@@ -56,3 +56,12 @@ test("every site module parses and loads outside the browser", async () => {
     await assert.doesNotReject(import(pathToFileURL(file).href), `${file} fails to load: syntax error or top-level DOM access`);
   }
 });
+
+test("every page links to the project repository on GitHub", () => {
+  for (const page of filesUnder(SITE, "-add.html")) {
+    assert.match(
+      readFileSync(page, "utf8"), /href="https:\/\/github\.com\/Evgeniy347\/maga-curve-web"/,
+      `${page} must link to github.com/Evgeniy347/maga-curve-web so readers find the source`,
+    );
+  }
+});

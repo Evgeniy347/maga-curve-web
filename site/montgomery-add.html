@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <title>Сложение точек кривой Монтгомери (𝔽ₚ)</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,900,400italic,700italic,900italic&amp;subset=latin,latin-ext,cyrillic">
+    <link rel="stylesheet" href="css/ec.css">
+    <script type="module" src="js/montgomery-add.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Сложение точек кривой Монтгомери (𝔽<sub>p</sub>)</h1>
+      <nav>
+        <ul>
+          <li class="field">ℝ</li>
+          <li><a href="https://andrea.corbellini.name/ecc/interactive/reals-add.html">Addition</a></li>
+          <li><a href="https://andrea.corbellini.name/ecc/interactive/reals-mul.html">Multiplication</a></li>
+          <li class="field">𝔽<sub>p</sub></li>
+          <li><a href="modk-add.html">Addition</a></li>
+          <li><a href="https://andrea.corbellini.name/ecc/interactive/modk-mul.html">Multiplication</a></li>
+          <li class="field">Монтгомери 𝔽<sub>p</sub></li>
+          <li><a href="montgomery-add.html" class="active">Сложение</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <div id="plot" class="box"></div>
+      <div class="box">
+        <div id="form">
+          <div class="parameters">
+            <p>Кривая:</p>
+            <div class="parameter curve-coefficient"><label for="coefficient-a">A</label><input id="coefficient-a" name="a" value="6" type="number" step="1"></div>
+            <div class="parameter curve-coefficient"><label for="coefficient-b">B</label><input id="coefficient-b" name="b" value="1" type="number" step="1"></div>
+          </div>
+          <div class="parameters">
+            <p>Поле:</p>
+            <div class="parameter curve-coefficient"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1"></div>
+            <div class="placeholder"></div>
+          </div>
+          <div class="parameters">
+            <p><em>P</em>:</p>
+            <div class="parameter point-coordinate"><label for="point-p-x">x</label><input id="point-p-x" name="px" value="2" type="number" step="1"></div>
+            <div class="parameter point-coordinate"><label for="point-p-y">y</label><input id="point-p-y" name="py" value="11" type="number" step="1"></div>
+          </div>
+          <div class="parameters">
+            <p><em>Q</em>:</p>
+            <div class="parameter point-coordinate"><label for="point-q-x">x</label><input id="point-q-x" name="qx" value="7" type="number" step="1"></div>
+            <div class="parameter point-coordinate"><label for="point-q-y">y</label><input id="point-q-y" name="qy" value="8" type="number" step="1"></div>
+          </div>
+          <div class="parameters">
+            <p><em>R</em> = <em>P</em> + <em>Q</em>:</p>
+            <div class="parameter point-coordinate result"><label for="point-r-x">x</label><input id="point-r-x" name="rx" readonly></div>
+            <div class="parameter point-coordinate result"><label for="point-r-y">y</label><input id="point-r-y" name="ry" readonly></div>
+          </div>
+        </div>
+        <div id="summary">
+          <p>Сложение точек кривой Монтгомери <span class="curve-equation"></span> над 𝔽<sub class="field-order"></sub>.</p>
+          <p>На кривой <span class="curve-order"></span> точек (вместе с точкой на бесконечности ∞).</p>
+          <p>Порядок <em>P</em>: <span class="point-order-p"></span>, <em>Q</em>: <span class="point-order-q"></span>, <em>R</em>: <span class="point-order-r"></span>.</p>
+          <p class="curve-singular-warning"><strong>Внимание:</strong> кривая сингулярна (<em>B</em>(<em>A</em><sup>2</sup> − 4) ≡ 0).</p>
+          <p class="composite-warning"><strong>Внимание:</strong> <em>p</em> не простое.</p>
+          <p class="presets">Игрушечная кривая диссертации: <a href="?a=6&amp;b=1&amp;p=29&amp;px=2&amp;py=11&amp;qx=7&amp;qy=8">P + Q</a> ·
+            <a href="?a=6&amp;b=1&amp;p=29&amp;px=9&amp;py=8&amp;qx=9&amp;qy=8">[2]G</a> ·
+            <a href="?a=6&amp;b=1&amp;p=29&amp;px=25&amp;py=17&amp;qx=9&amp;qy=8">[3]G = [2]G + G</a> ·
+            <a href="?a=6&amp;b=1&amp;p=29&amp;px=9&amp;py=21&amp;qx=9&amp;qy=8">−G + G = ∞</a></p>
+        </div>
+        <div id="steps">
+          <p><strong>Ход вычисления</strong> (все действия по модулю <em>p</em>):</p>
+          <ol></ol>
+        </div>
+      </div>
+    </main>
+    <footer>
+      <p>Игрушечная кривая из магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ»: <em>y</em><sup>2</sup> = <em>x</em><sup>3</sup> + 6<em>x</em><sup>2</sup> + <em>x</em> над 𝔽<sub>29</sub>, #<em>E</em> = 40 = 8·5, <em>G</em> = (9, 8) порядка ℓ = 5 — та же форма и тот же кофактор 8, что у X25519 (<em>A</em> = 486662, <em>p</em> = 2<sup>255</sup> − 19).</p>
+      <p>Интерфейс повторяет страницу Andrea Corbellini для <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Elliptic Curve Cryptography: a gentle introduction</a>, лицензия <a href="https://opensource.org/licenses/MIT">MIT</a>.</p>
+    </footer>
+  </body>
+</html>

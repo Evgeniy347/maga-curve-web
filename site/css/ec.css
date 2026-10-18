@@ -166,3 +166,17 @@ main #form .parameters .parameter input {
   width: 5em;
   border: 0 none;
 }
+
+main #summary .presets {
+  font-size: .9em;
+}
+
+main #steps {
+  margin: 1em .35em 0 .35em;
+  max-width: 32em;
+}
+
+main #steps ol {
+  margin: .3em 0 0 2em;
+  font-variant-numeric: tabular-nums;
+}

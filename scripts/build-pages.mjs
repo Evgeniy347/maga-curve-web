@@ -280,9 +280,8 @@ export function toolPage(formKey, op) {
   const stepsTitle = op.startsWith("reals") ? "Ход вычисления" : 'Ход вычисления · по модулю <span class="steps-modulus"></span>';
   const description = `${operation.title}: ${form.name.toLowerCase()} ${form.equation}, график, ход вычисления по шагам.`;
   return head(`${operation.title} · ${form.name}`, description, "app.js") + `<main id="main" class="gw-wrap" data-form="${formKey}" data-op="${op}">
+  <p class="gw-crumbs page-crumbs"><a href="/">Все страницы</a> / <a href="index.html">${SITE_TITLE}</a> / ${form.name} / ${operation.tab}</p>
 ${siteNav(formKey, op)}  <div class="gw-page-head">
-    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">${SITE_TITLE}</a> / ${form.name} / ${operation.tab}</div>
-    <p class="gw-eyebrow">${form.name} · ${form.equation}</p>
     <h1>${operation.heading}</h1>
     <p class="gw-lead">${settings.lead}</p>
   </div>
@@ -325,6 +324,7 @@ export function landingPage() {
         <ul class="tool-links">${toolLinks(key)}</ul>
       </section>`).join("\n");
   return head(`${SITE_TITLE} — сложение и умножение`, "Учебный интерактив к магистерской диссертации о Curve25519: сложение и умножение точек эллиптической кривой над 𝔽p и ℝ в формах Монтгомери и Вейерштрасса.", "landing.js") + `<main id="main" class="gw-wrap">
+  <p class="gw-crumbs page-crumbs"><a href="/">Все страницы</a> / ${SITE_TITLE}</p>
 ${siteNav(null, null)}  <section class="hero">
     <div>
       <p class="gw-eyebrow">Учебный интерактив · магистерская диссертация</p>

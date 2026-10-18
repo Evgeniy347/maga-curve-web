@@ -147,6 +147,19 @@ test("site/ is exactly what the page generator produces", async () => {
   }
 });
 
+test("crumbs come first, then the form and operation tabs, then the heading; no eyebrow repeating the active tab", () => {
+  for (const page of PAGES) {
+    const html = read(page);
+    const crumbs = html.indexOf('class="gw-crumbs page-crumbs"');
+    const nav = html.indexOf('<nav class="sitenav"');
+    const heading = html.indexOf("<h1>");
+    assert.ok(crumbs > 0 && crumbs < nav && nav < heading, `${page}: breadcrumbs are the top-level navigation, tabs are local to the section`);
+  }
+  for (const page of TOOL_PAGES) {
+    assert.doesNotMatch(read(page), /<p class="gw-eyebrow">Форма/, `${page}: the active form tab already shows the form and its equation`);
+  }
+});
+
 test("the site title covers both fields: no «над 𝔽p» on level 1", () => {
   assert.match(read("index.html"), /<h1>Точки эллиптических кривых<\/h1>/, "the site also has pages over ℝ");
   for (const page of TOOL_PAGES) {

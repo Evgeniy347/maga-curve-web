@@ -3,6 +3,7 @@ import { lineThrough } from "./chord.js";
 import { largestPrimeFactor, mod } from "./field.js";
 import { Plot, plotRange, pointRadius } from "./plot.js";
 import { snapToCurve } from "./snap.js";
+import { multiplicationStages, plural } from "./steps.js";
 
 const LINE_KINDS = { tangent: "касательная", vertical: "вертикаль" };
 const QUERY_NAME = /^[a-z]+$/;
@@ -207,5 +208,54 @@ export class AdditionPage extends FormPage {
     this.toggle(".curve-singular-warning", curve.isSingular());
     this.toggle(".composite-warning", !curve.isFieldPrime());
     this.markPreset();
+  }
+}
+
+export class MultiplicationPage extends FormPage {
+  constructor(root, form) {
+    super(root);
+    this.form = form;
+    this.pInput = new PointInput(root, "p");
+    this.plot = new Plot(root.querySelector("#plot"));
+  }
+
+  update() {
+    const coefficients = Object.fromEntries(this.form.coefficients.map((name) => [name, this.number(name)]));
+    const curve = this.form.create({ ...coefficients, p: this.number("p") });
+    const n = Math.trunc(this.number("n"));
+    const P = this.pInput.snap(curve);
+    const result = multiplicationStages(curve, n, P, this.form.names);
+    const Q = result.result;
+    const { p } = curve;
+    const subgroup = curve.cyclicSubgroup(P);
+    this.plot.render({
+      range: plotRange(p),
+      points: curve.points(),
+      pointRadius: pointRadius(p),
+      highlights: subgroup,
+      badges: [{ name: "P", role: "is-p", point: P }, { name: "Q", role: "is-r", point: Q }],
+      caption: `График: Q = n·P на кривой над 𝔽${p}`,
+      description: `Точки кривой над F_${p}: ${curve.points().length}; подгруппа P из ${subgroup.length} аффинных точек; Q = ${n}·${formatPoint(P)} = ${formatPoint(Q)}.`,
+    });
+    this.input("qx").value = formatCoordinate(Q, 0);
+    this.input("qy").value = formatCoordinate(Q, 1);
+    const { subgroup: ell, cofactor } = groupStructure(curve.order());
+    this.html(".curve-equation", this.form.equation(coefficients));
+    this.text(".field-order", p);
+    this.text(".curve-order", curve.order());
+    this.text(".curve-order-factor", `= ${cofactor}·${ell}`);
+    this.text(".point-order-p", result.order ?? "—");
+    this.text(".residue", result.order ? `${mod(n, result.order)}` : "—");
+    this.text(".operations", result.doublings + result.additions);
+    this.text(".naive-operations", Math.max(Math.abs(n) - 1, 0));
+    this.text(".legend-subgroup", `подгруппа ⟨P⟩: ${plural(subgroup.length, ["точка", "точки", "точек"])} + ∞`);
+    this.text(".sum-n", n);
+    this.text(".sum-p", formatPoint(P));
+    this.text(".sum-r", formatPoint(Q));
+    this.text(".steps-modulus", p);
+    this.toggle(".curve-singular-warning", curve.isSingular());
+    this.toggle(".composite-warning", !curve.isFieldPrime());
+    this.markPreset();
+    this.emit({ curve, n, P, Q, result });
   }
 }

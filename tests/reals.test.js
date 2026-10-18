@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { RealCurve, doubleAndAdd } from "../site/js/curve.js";
 import { realCurvePolyline, realLine, realPlotRange } from "../site/js/real-geometry.js";
-import { formatRealPoint, plural, realAdditionStages, realMultiplicationStages } from "../site/js/real-steps.js";
+import { formatRealPoint, realAdditionStages, realMultiplicationStages } from "../site/js/real-steps.js";
+import { plural } from "../site/js/steps.js";
 import { round5, snapToRealCurve } from "../site/js/snap.js";
 
 const fixture = JSON.parse(readFileSync(new URL("./fixtures/corbellini-reals.json", import.meta.url), "utf8"));

@@ -1,5 +1,6 @@
 import { INFINITY, doubleAndAdd } from "./curve.js";
 import { round5 } from "./snap.js";
+import { plural } from "./steps.js";
 
 const MINUS = "−";
 const TOLERANCE = 1e-6;
@@ -77,15 +78,6 @@ export function realAdditionStages(curve, first, second) {
     ],
     check: checkStage(curve, trace.result),
   };
-}
-
-export function plural(count, [one, few, many]) {
-  const tens = count % 100;
-  const units = count % 10;
-  if (tens >= 11 && tens <= 14) return `${count} ${many}`;
-  if (units === 1) return `${count} ${one}`;
-  if (units >= 2 && units <= 4) return `${count} ${few}`;
-  return `${count} ${many}`;
 }
 
 function scaled(multiplier) {

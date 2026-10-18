@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const SITE = fileURLToPath(new URL("../site/", import.meta.url));
-const PAGES = ["index.html", "montgomery-add.html", "modk-add.html", "reals-add.html", "reals-mul.html"];
+const PAGES = ["index.html", "montgomery-add.html", "modk-add.html", "montgomery-mul.html", "reals-add.html", "reals-mul.html"];
 const FIELD_PAGES = ["montgomery-add.html", "modk-add.html"];
 const read = (page) => readFileSync(join(SITE, page), "utf8");
 
@@ -35,7 +35,7 @@ test("site sources carry no comments: explanations live in tests and docs/", () 
 
 test("every page loads only modules that exist", () => {
   for (const page of PAGES) {
-    for (const { src } of scriptsOf(read(page))) {
+    for (const { src } of scriptsOf(read(page)).filter((script) => !script.src.startsWith("/core/"))) {
       assert.doesNotThrow(
         () => readFileSync(join(SITE, src)),
         `${page} references ${src}, which is missing from site/: the page would render without its controller`,
@@ -46,7 +46,7 @@ test("every page loads only modules that exist", () => {
 
 test("every page in site/ is listed, so the checks below cover all of them", () => {
   assert.deepEqual(
-    filesUnder(SITE, ".html").map((file) => file.slice(SITE.length)).sort(), [...PAGES].sort(),
+    filesUnder(SITE, ".html").map((file) => file.slice(SITE.length).replaceAll("\\", "/")).sort(), [...PAGES].sort(),
     "a new page must be added to PAGES to get the navigation, language and GitHub checks",
   );
 });
@@ -95,21 +95,57 @@ test("the word «игрушечная» is gone from every page: the thesis curv
   }
 });
 
-test("every page is Russian, mobile-ready and shares one navigation that covers 𝔽p and ℝ", () => {
-  const navOf = (html) => html.match(/<nav[\s\S]*?<\/nav>/)[0].replace(/ aria-current="page"/g, "");
+test("every page follows the gateway contract: core CSS/JS in <head>, no own header, footer or theme switch", () => {
+  for (const page of PAGES) {
+    const html = read(page);
+    const head = html.slice(0, html.indexOf("</head>"));
+    assert.match(html, /<html lang="ru">/, `${page}: the site is Russian-only`);
+    assert.match(html, /name="viewport"/, `${page}: without a viewport meta phones render the desktop layout at ~0.5 scale`);
+    assert.match(head, /<link rel="stylesheet" href="\/core\/gateway\.css">/, `${page}: PUBLISHING.md §3 — a page without /core/gateway.css is not published`);
+    assert.match(head, /<script src="\/core\/gateway\.js"><\/script>/, `${page}: /core/gateway.js without defer/async, or the theme flickers`);
+    assert.ok(head.indexOf("/core/gateway.css") < head.indexOf("css/site.css"), `${page}: our styles load after the core so they can build on its tokens`);
+    assert.match(html, /<body>\n<main id="main" class="gw-wrap">/,`${page}: content lives in main#main.gw-wrap right after <body>, where the server injects its header`);
+    assert.doesNotMatch(html, /<header|<footer|data-theme-toggle|fonts\.googleapis/, `${page}: header, footer, theme switch and fonts come from the gateway core`);
+    for (const [, href] of html.matchAll(/(?:href|src)="(\/[^"]*)"/g)) {
+      assert.match(href, /^\/(core\/.*)?$/, `${page}: absolute link ${href} — only /core/… and / are allowed (PUBLISHING.md §3.4)`);
+    }
+  }
+});
+
+test("all pages share one tool menu that covers 𝔽p and ℝ and marks the current page", () => {
+  const navOf = (html) => html.match(/<nav class="subnav"[\s\S]*?<\/nav>/)[0].replace(/ aria-current="page"/g, "");
   const reference = navOf(read("index.html"));
-  for (const href of ["index.html", "montgomery-add.html", "modk-add.html", "reals-add.html", "reals-mul.html"]) {
+  for (const href of PAGES) {
     assert.match(reference, new RegExp(`href="${href}"`), `the menu must link to ${href}`);
   }
   for (const page of PAGES) {
     const html = read(page);
-    assert.match(html, /<html lang="ru">/, `${page}: the site is Russian-only`);
-    assert.match(html, /name="viewport"/, `${page}: without a viewport meta phones render the desktop layout at ~0.5 scale`);
-    assert.match(html, /data-theme-toggle/, `${page}: dark theme is switched by a toggle in the top bar`);
-    assert.equal(navOf(html), reference, `${page}: navigation differs from index.html`);
+    assert.equal(navOf(html), reference, `${page}: tool menu differs from index.html`);
     assert.match(html, new RegExp(`href="${page}" aria-current="page"`), `${page}: its own menu item must be marked as current`);
-    assert.doesNotMatch(html, /corbellini\.name\/ecc\/interactive\/(reals|modk-mul)/, `${page}: the menu leads to our own ℝ pages, not Corbellini's`);
+    assert.doesNotMatch(html, /corbellini\.name\/ecc\/interactive\/(reals|modk-mul)/, `${page}: the menu leads to our own pages, not Corbellini's`);
   }
+});
+
+test("our stylesheet builds on the gateway tokens instead of redefining them", () => {
+  const css = readFileSync(join(SITE, "css", "site.css"), "utf8");
+  const ownTokens = [...css.matchAll(/(--[a-z0-9-]+)\s*:/g)].map(([, name]) => name);
+  const coreTokens = ["--bg", "--surface", "--surface-2", "--text", "--muted", "--faint", "--border", "--border-strong", "--accent", "--accent-soft", "--blue", "--violet", "--red", "--warn", "--ok", "--shadow", "--radius", "--sans", "--serif", "--mono"];
+  for (const token of coreTokens) {
+    assert.ok(!ownTokens.includes(token), `site.css redefines core token ${token}: light/dark theme of the gateway would break`);
+  }
+  assert.doesNotMatch(css, /(^|\n|,)\s*\.gw-[a-z-]+[^{]*\{/, "own rules must not define gw- classes (PUBLISHING.md §3.5)");
+  assert.doesNotMatch(css, /(^|\n)(body|html|\*,\*::before)[^{]*\{/, "global resets belong to the core stylesheet");
+});
+
+test("page.json is a valid gateway manifest with exactly the allowed fields", () => {
+  const manifest = JSON.parse(readFileSync(join(SITE, "page.json"), "utf8"));
+  const allowed = ["title", "description", "visibility", "created", "tags"];
+  assert.deepEqual(Object.keys(manifest).filter((key) => !allowed.includes(key)), [], "an unknown field makes the page invisible (PUBLISHING.md §2)");
+  assert.ok(manifest.title.length > 0 && manifest.title.length <= 200, "title: non-empty, ≤ 200 chars");
+  assert.ok(manifest.description.length <= 1000, "description ≤ 1000 chars");
+  assert.equal(manifest.visibility, "public", "the thesis tool is public, as it was on port 8083");
+  assert.match(manifest.created, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/, "created: date, time and offset of the real first publication (PUBLISHING.md §2), never changed afterwards");
+  assert.ok(manifest.tags.length <= 12 && manifest.tags.every((tag) => tag.length <= 40), "≤ 12 tags of ≤ 40 chars");
 });
 
 test("the landing page has no call-to-action buttons and no «без регистрации» line", () => {

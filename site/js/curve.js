@@ -139,6 +139,16 @@ export class CubicCurve {
     return result;
   }
 
+  cyclicSubgroup(point) {
+    const members = [];
+    let current = point;
+    while (current !== INFINITY && current !== undefined && members.length < this.order()) {
+      members.push(current);
+      current = this.add(current, point);
+    }
+    return members;
+  }
+
   pointOrder(point) {
     let current = point;
     for (let n = 1; n <= this.order(); n += 1) {
@@ -251,9 +261,10 @@ export function doubleAndAdd(curve, scalar, point) {
   const chain = [{ action: "start", bit: 1, multiplier: 1, point: base }];
   for (const bit of bits.slice(1)) {
     const last = chain.at(-1);
+    if (last.point === undefined) break;
     chain.push({ action: "double", bit: Number(bit), multiplier: 2 * last.multiplier, point: curve.add(last.point, last.point) });
-    if (bit === "1") {
-      const doubled = chain.at(-1);
+    const doubled = chain.at(-1);
+    if (bit === "1" && doubled.point !== undefined) {
       chain.push({ action: "add", multiplier: doubled.multiplier + 1, point: curve.add(doubled.point, base) });
     }
   }

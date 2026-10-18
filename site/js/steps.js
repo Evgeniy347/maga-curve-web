@@ -1,3 +1,4 @@
+import { INFINITY, doubleAndAdd } from "./curve.js";
 import { mod } from "./field.js";
 
 const MINUS = "−";
@@ -156,4 +157,46 @@ export function additionSteps(curve, first, second, names = DEFAULT_NAMES) {
   const { stages, message } = additionStages(curve, first, second, names);
   const lines = stages.flatMap((stage) => stage.steps.map((item) => stepText(item, curve.p)));
   return message ? [...lines, message] : lines;
+}
+
+export function plural(count, [one, few, many]) {
+  const tens = count % 100;
+  const units = count % 10;
+  if (tens >= 11 && tens <= 14) return `${count} ${many}`;
+  if (units === 1) return `${count} ${one}`;
+  if (units >= 2 && units <= 4) return `${count} ${few}`;
+  return `${count} ${many}`;
+}
+
+export function multipleName(multiplier, symbol = "P") {
+  return `[${multiplier < 0 ? MINUS : ""}${Math.abs(multiplier)}]${symbol}`;
+}
+
+function operandsOf(chain, index, base) {
+  const previous = chain[index - 1].point;
+  return chain[index].action === "double" ? [previous, previous] : [previous, base];
+}
+
+export function multiplicationStages(curve, scalar, point, names = DEFAULT_NAMES) {
+  const chain = doubleAndAdd(curve, scalar, point);
+  const order = point === INFINITY ? 1 : curve.pointOrder(point);
+  const base = scalar < 0 ? curve.neg(point) : point;
+  const seen = new Map();
+  const links = chain.map((link, i) => {
+    const residue = order ? mod(link.multiplier, order) : null;
+    if (link.action === "zero" || link.action === "start") return { ...link, step: i + 1, residue };
+    const operands = operandsOf(chain, i, base);
+    const key = JSON.stringify(operands);
+    const sameAs = seen.get(key);
+    if (sameAs === undefined) seen.set(key, i + 1);
+    const detail = sameAs === undefined ? additionStages(curve, operands[0], operands[1], names) : null;
+    return { ...link, step: i + 1, residue, operands, sameAs, detail };
+  });
+  return {
+    links,
+    order,
+    result: chain.at(-1).point,
+    doublings: chain.filter((link) => link.action === "double").length,
+    additions: chain.filter((link) => link.action === "add").length,
+  };
 }

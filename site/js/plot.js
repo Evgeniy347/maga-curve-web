@@ -93,7 +93,7 @@ export class Plot {
     ];
   }
 
-  render({ range, points = [], pointRadius: radius = POINT_RADIUS.max, curveLines = [], chord = [], badges = [], R = null, third = null, caption, description }) {
+  render({ range, points = [], pointRadius: radius = POINT_RADIUS.max, highlights = [], curveLines = [], chord = [], badges = [], R = null, third = null, caption, description }) {
     this.range = range;
     const { view, left, top, size } = LAYOUT;
     const clip = `${this.id}-clip`;
@@ -113,6 +113,7 @@ export class Plot {
         this.polylines("plot-chord", [chord]),
         this.reflection(R, third),
         this.curvePoints(points, radius),
+        this.highlightRings(highlights, radius),
         this.thirdPoint(R, third),
       ]),
       ...badges.map(({ name, role, point }) => this.badge(name, role, point)),
@@ -152,6 +153,14 @@ export class Plot {
       return element("circle", { cx, cy, r: radius }, [title(`(${coordinate(point[0])}, ${coordinate(point[1])})`)]);
     });
     return element("g", { class: "plot-points" }, circles);
+  }
+
+  highlightRings(points, radius) {
+    const rings = points.map((point) => {
+      const [cx, cy] = this.toPixel(point);
+      return element("circle", { cx, cy, r: radius + 3.5 }, [title(`(${coordinate(point[0])}, ${coordinate(point[1])})`)]);
+    });
+    return element("g", { class: "plot-subgroup" }, rings);
   }
 
   reflection(R, third) {

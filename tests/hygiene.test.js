@@ -5,8 +5,11 @@ import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const SITE = fileURLToPath(new URL("../site/", import.meta.url));
-const PAGES = ["index.html", "montgomery-add.html", "modk-add.html", "montgomery-mul.html", "reals-add.html", "reals-mul.html"];
-const FIELD_PAGES = ["montgomery-add.html", "modk-add.html"];
+const FORMS = ["montgomery", "weierstrass"];
+const OPERATIONS = ["add", "mul", "reals-add", "reals-mul"];
+const TOOL_PAGES = FORMS.flatMap((form) => OPERATIONS.map((op) => `${form}-${op}.html`));
+const PAGES = ["index.html", ...TOOL_PAGES];
+const FIELD_PAGES = FORMS.map((form) => `${form}-add.html`);
 const read = (page) => readFileSync(join(SITE, page), "utf8");
 
 function filesUnder(dir, extension) {
@@ -64,7 +67,7 @@ test("finite-field pages have the inputs and slots the addition controller reads
 });
 
 test("real-field pages have the inputs their controllers read", () => {
-  const required = { "reals-add.html": ["a", "b", "px", "py", "qx", "qy", "rx", "ry"], "reals-mul.html": ["a", "b", "n", "px", "py", "qx", "qy"] };
+  const required = Object.fromEntries(FORMS.flatMap((form) => [[`${form}-reals-add.html`, ["a", "b", "px", "py", "qx", "qy", "rx", "ry"]], [`${form}-reals-mul.html`, ["a", "b", "n", "px", "py", "qx", "qy"]], [`${form}-mul.html`, ["a", "b", "p", "n", "px", "py", "qx", "qy"]]]));
   for (const [page, names] of Object.entries(required)) {
     const html = read(page);
     for (const name of names) {
@@ -104,7 +107,7 @@ test("every page follows the gateway contract: core CSS/JS in <head>, no own hea
     assert.match(head, /<link rel="stylesheet" href="\/core\/gateway\.css">/, `${page}: PUBLISHING.md §3 — a page without /core/gateway.css is not published`);
     assert.match(head, /<script src="\/core\/gateway\.js"><\/script>/, `${page}: /core/gateway.js without defer/async, or the theme flickers`);
     assert.ok(head.indexOf("/core/gateway.css") < head.indexOf("css/site.css"), `${page}: our styles load after the core so they can build on its tokens`);
-    assert.match(html, /<body>\n<main id="main" class="gw-wrap">/,`${page}: content lives in main#main.gw-wrap right after <body>, where the server injects its header`);
+    assert.match(html, /<body>\n<main id="main" class="gw-wrap"[ >]/, `${page}: content lives in main#main.gw-wrap right after <body>, where the server injects its header`);
     assert.doesNotMatch(html, /<header|<footer|data-theme-toggle|fonts\.googleapis/, `${page}: header, footer, theme switch and fonts come from the gateway core`);
     for (const [, href] of html.matchAll(/(?:href|src)="(\/[^"]*)"/g)) {
       assert.match(href, /^\/(core\/.*)?$/, `${page}: absolute link ${href} — only /core/… and / are allowed (PUBLISHING.md §3.4)`);
@@ -112,17 +115,42 @@ test("every page follows the gateway contract: core CSS/JS in <head>, no own hea
   }
 });
 
-test("all pages share one tool menu that covers 𝔽p and ℝ and marks the current page", () => {
-  const navOf = (html) => html.match(/<nav class="subnav"[\s\S]*?<\/nav>/)[0].replace(/ aria-current="page"/g, "");
-  const reference = navOf(read("index.html"));
-  for (const href of PAGES) {
-    assert.match(reference, new RegExp(`href="${href}"`), `the menu must link to ${href}`);
-  }
+test("two-level menu: form tabs on every page, operation tabs of the current form on tool pages", () => {
+  const formTabsOf = (html) => html.match(/<div class="form-tabs">[\s\S]*?<\/div>/)[0].replace(/ aria-current="true"/g, "").replace(/-(add|mul|reals-add|reals-mul)\.html/g, "-OP.html");
+  const reference = formTabsOf(read("index.html"));
+  for (const form of FORMS) assert.match(reference, new RegExp(`href="${form}-OP\.html"`), `the landing page offers the ${form} form`);
   for (const page of PAGES) {
     const html = read(page);
-    assert.equal(navOf(html), reference, `${page}: tool menu differs from index.html`);
-    assert.match(html, new RegExp(`href="${page}" aria-current="page"`), `${page}: its own menu item must be marked as current`);
+    assert.equal(formTabsOf(html), reference, `${page}: form tabs differ from index.html`);
     assert.doesNotMatch(html, /corbellini\.name\/ecc\/interactive\/(reals|modk-mul)/, `${page}: the menu leads to our own pages, not Corbellini's`);
+  }
+  for (const form of FORMS) {
+    for (const op of OPERATIONS) {
+      const page = `${form}-${op}.html`;
+      const html = read(page);
+      assert.match(html, new RegExp(`<main id="main" class="gw-wrap" data-form="${form}" data-op="${op}">`), `${page}: app.js picks the controller from data-form/data-op`);
+      assert.match(html, new RegExp(`class="form-tab" href="${form}-${op}\.html" aria-current="true"`), `${page}: its form tab is current`);
+      for (const other of FORMS.filter((f) => f !== form)) {
+        assert.match(html, new RegExp(`class="form-tab" href="${other}-${op}\.html"`), `${page}: switching the form keeps the operation`);
+      }
+      const opTabs = html.match(/<div class="op-tabs">[\s\S]*?<\/div>/)[0];
+      assert.deepEqual([...opTabs.matchAll(/href="([^"]+)"/g)].map(([, href]) => href), OPERATIONS.map((o) => `${form}-${o}.html`), `${page}: four operation tabs of the same form`);
+      assert.match(opTabs, new RegExp(`href="${page}" aria-current="page"`), `${page}: its operation tab is current`);
+    }
+  }
+});
+
+test("site/ is exactly what the page generator produces", async () => {
+  const { buildPages } = await import("../scripts/build-pages.mjs");
+  for (const [file, html] of Object.entries(buildPages())) {
+    assert.equal(read(file), html, `${file} differs from scripts/build-pages.mjs: edit the generator and run npm run build`);
+  }
+});
+
+test("the site title covers both fields: no «над 𝔽p» on level 1", () => {
+  assert.match(read("index.html"), /<h1>Точки эллиптических кривых<\/h1>/, "the site also has pages over ℝ");
+  for (const page of TOOL_PAGES) {
+    assert.match(read(page), /<a href="index\.html">Точки эллиптических кривых<\/a>/, `${page}: crumbs name the site`);
   }
 });
 
@@ -149,6 +177,7 @@ test("page.json is a valid gateway manifest with exactly the allowed fields", ()
 });
 
 test("the landing page has no call-to-action buttons and no «без регистрации» line", () => {
+  assert.match(read("index.html"), /class="card form-card"[\s\S]*class="card form-card"/, "two form cards, each listing its four tools");
   const html = read("index.html");
   assert.doesNotMatch(html, /class="actions"|btn-primary/, "hero buttons were removed: the tool cards below are the entry points");
   assert.doesNotMatch(html, /регистрац/i, "«без регистрации и установки» reads like an ad, not an academic page");

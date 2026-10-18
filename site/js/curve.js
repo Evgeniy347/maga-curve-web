@@ -187,40 +187,54 @@ export function cubicRoots(a, b) {
   return sortedUnique([2 * Math.cbrt(r), Math.cbrt(-r)]);
 }
 
+export function generalCubicRoots(A, C, D) {
+  if (A === 0) return cubicRoots(C, D);
+  const shift = A / 3;
+  const p = C - A * A / 3;
+  const q = 2 * A * A * A / 27 - A * C / 3 + D;
+  return sortedUnique(cubicRoots(p, q).map((t) => t - shift));
+}
+
 export class RealCurve {
-  constructor({ a, b }) {
-    this.a = a;
-    this.b = b;
+  constructor({ A = 0, B = 1, C = 0, D = 0 }) {
+    this.A = A;
+    this.B = B;
+    this.C = C;
+    this.D = D;
   }
 
   rhs(x) {
-    return x * (x * x + this.a) + this.b;
+    return x * (x * x + this.A * x + this.C) + this.D;
   }
 
   y(x) {
-    return Math.sqrt(this.rhs(x));
+    return Math.sqrt(this.rhs(x) / this.B);
   }
 
   roots() {
-    return cubicRoots(this.a, this.b);
+    return generalCubicRoots(this.A, this.C, this.D);
   }
 
   xsAt(y) {
-    return cubicRoots(this.a, this.b - y * y);
+    return generalCubicRoots(this.A, this.C, this.D - this.B * y * y);
   }
 
   stationaryPoints() {
-    const x0 = -Math.sqrt(-this.a / 3);
-    const x1 = -x0;
-    const y0 = Math.sqrt(this.b - 2 * x0 * x0 * x0);
-    const y1 = Math.sqrt(this.b - 2 * x1 * x1 * x1);
-    if (Number.isNaN(x0) || Number.isNaN(y0)) return [];
-    if (x0 === 0 || Number.isNaN(y1)) return [[x0, y0]];
-    return [[x0, y0], [x1, y1]];
+    const discriminant = this.A * this.A - 3 * this.C;
+    if (discriminant < 0) return [];
+    const root = Math.sqrt(discriminant);
+    const [left, right] = [(-this.A - root) / 3, (-this.A + root) / 3];
+    const yLeft = this.y(left);
+    const yRight = this.y(right);
+    if (Number.isNaN(yLeft)) return [];
+    if (root === 0 || Number.isNaN(yRight)) return [[left, yLeft]];
+    return [[left, yLeft], [right, yRight]];
   }
 
   isSingular() {
-    return 4 * this.a ** 3 + 27 * this.b ** 2 === 0;
+    const { A, B, C, D } = this;
+    const discriminant = A * A * C * C - 4 * C ** 3 - 4 * A ** 3 * D - 27 * D * D + 18 * A * C * D;
+    return B === 0 || discriminant === 0;
   }
 
   neg(point) {
@@ -238,9 +252,9 @@ export class RealCurve {
     if (x1 === x2) {
       if (y1 !== y2 || y1 === 0) return { kind: "vertical", result: INFINITY };
       kind = "tangent";
-      lambda = (3 * x1 * x1 + this.a) / y1 / 2;
+      lambda = (3 * x1 * x1 + 2 * this.A * x1 + this.C) / y1 / 2 / this.B;
     }
-    const x3 = lambda * lambda - x1 - x2;
+    const x3 = this.B * lambda * lambda - this.A - x1 - x2;
     const y3 = lambda * (x1 - x3) - y1;
     return { kind, lambda, x3, y3, result: [x3, y3] };
   }
@@ -252,6 +266,14 @@ export class RealCurve {
   multiply(scalar, point) {
     return doubleAndAdd(this, scalar, point).at(-1).point;
   }
+}
+
+export function realWeierstrass({ a, b }) {
+  return new RealCurve({ C: a, D: b });
+}
+
+export function realMontgomery({ A, B = 1 }) {
+  return new RealCurve({ A, B, C: 1 });
 }
 
 export function doubleAndAdd(curve, scalar, point) {

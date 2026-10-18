@@ -7,7 +7,7 @@ import { Plot } from "../site/js/plot.js";
 import { renderChain, renderStages, renderSteps } from "../site/js/steps-view.js";
 import { additionStages, multiplicationStages } from "../site/js/steps.js";
 import { realAdditionStages } from "../site/js/real-steps.js";
-import { RealCurve } from "../site/js/curve.js";
+import { realWeierstrass } from "../site/js/curve.js";
 
 const create = installFakeDocument();
 const curve = montgomery({ A: 6, p: 29 });
@@ -36,7 +36,7 @@ test("the check line is written as one equation per side", () => {
 
 test("over ℝ there is no reduction and the result follows =", () => {
   const list = create();
-  renderStages(list, realAdditionStages(new RealCurve({ a: -7, b: 10 }), [1, 2], [3, 4]));
+  renderStages(list, realAdditionStages(realWeierstrass({ a: -7, b: 10 }), [1, 2], [3, 4]));
   assert.equal(list.byClass("eq")[0].textContent, " = ", "real numbers are not residues");
   assert.equal(list.byClass("val")[0].textContent, "1", "λ = 1");
 });

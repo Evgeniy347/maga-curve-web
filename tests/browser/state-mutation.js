@@ -8,18 +8,20 @@ window.stateMutationRun = async ({ base = "/", seed = 1, sequences = 6, steps = 
   const integer = (min, max) => min + Math.floor(random() * (max - min + 1));
 
   const FIELD = [29, 59, 97, 2, 3, 5, 15, 31, 1, 0, -7];
-  const PAGES = {
-    "montgomery-add.html": { kind: "fp", form: "montgomery", inputs: ["a", "b", "p", "px", "py", "qx", "qy"] },
-    "modk-add.html": { kind: "fp", form: "weierstrass", inputs: ["a", "b", "p", "px", "py", "qx", "qy"] },
-    "montgomery-mul.html": { kind: "fp", form: "montgomery", inputs: ["a", "b", "p", "n", "px", "py"] },
-    "reals-add.html": { kind: "real", inputs: ["a", "b", "px", "py", "qx", "qy"] },
-    "reals-mul.html": { kind: "real", inputs: ["a", "b", "n", "px", "py"] },
-  };
+  const PAGES = {};
+  for (const form of ["montgomery", "weierstrass"]) {
+    PAGES[`${form}-add.html`] = { kind: "fp", form, inputs: ["a", "b", "p", "px", "py", "qx", "qy"] };
+    PAGES[`${form}-mul.html`] = { kind: "fp", form, inputs: ["a", "b", "p", "n", "px", "py"] };
+    PAGES[`${form}-reals-add.html`] = { kind: "real", form, inputs: ["a", "b", "px", "py", "qx", "qy"] };
+    PAGES[`${form}-reals-mul.html`] = { kind: "real", form, inputs: ["a", "b", "n", "px", "py"] };
+  }
 
   function value(page, name) {
     if (name === "p") return pick(FIELD);
     if (name === "n") return pick([0, 1, 2, 3, 5, 13, 538, -1, -3, integer(-60, 600)]);
     if (PAGES[page].kind === "real") {
+      if (PAGES[page].form === "montgomery" && name === "a") return pick([6, 2, 0, -3, 3, 10, integer(-8, 12)]);
+      if (PAGES[page].form === "montgomery" && name === "b") return pick([1, 2, 4, 0.5, 0, -1]);
       if (name === "a" || name === "b") return pick([-7, 10, -4, 1, 0, 2, -3, 3, integer(-12, 12)]);
       return pick([integer(-6, 6), (integer(-60, 60) / 10).toFixed(1), 0]);
     }
@@ -85,6 +87,12 @@ window.stateMutationRun = async ({ base = "/", seed = 1, sequences = 6, steps = 
     const p = Number(values.p);
     if (spec.kind === "fp" && !(Number.isInteger(p) && p >= 2)) problems.push(`field shows p = ${values.p}: an invalid modulus must be rejected`);
     if (values.n !== undefined && !Number.isSafeInteger(Number(values.n))) problems.push(`n = ${values.n} is not a safe integer`);
+    if (spec.kind === "real" && spec.form === "montgomery" && !(Number(values.b) > 0)) problems.push(`B = ${values.b}: over ℝ the Montgomery page must keep B > 0`);
+    if (spec.kind === "real" && values.px !== undefined) {
+      const [a, b, x, y] = [values.a, values.b, values.px, values.py].map(Number);
+      const rhs = spec.form === "montgomery" ? (x ** 3 + a * x * x + x) / b : x ** 3 + a * x + b;
+      if (Number.isFinite(rhs) && Math.abs(y * y - rhs) > 1e-3 * Math.max(1, Math.abs(rhs))) problems.push(`P = (${x}, ${y}) is not on the real curve (y² = ${rhs})`);
+    }
     if (spec.kind === "fp" && Number.isInteger(p) && p >= 2) {
       for (const prefix of ["p", "q"]) {
         if (values[`${prefix}x`] === undefined || doc.querySelector(`input[name=${prefix}x]`).readOnly) continue;

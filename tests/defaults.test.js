@@ -10,7 +10,7 @@ const defaults = (html) => Object.fromEntries(
 );
 
 const montgomeryPage = defaults(read("montgomery-add.html"));
-const weierstrassPage = defaults(read("modk-add.html"));
+const weierstrassPage = defaults(read("weierstrass-add.html"));
 
 test("Montgomery page opens on the curve of dlog-p29v2.md with P = (2, 11), Q = (7, 8)", () => {
   assert.deepEqual(
@@ -43,11 +43,37 @@ test("Weierstrass page opens on the same curve via X = x + A/3", () => {
 });
 
 test("the landing page links to the thesis curve page and plots the same sum", async () => {
-  assert.match(read("index.html"), /class="tool-card card" href="montgomery-add\.html"/, "a tool card opens the Montgomery page");
+  assert.match(read("index.html"), /<a href="montgomery-add\.html">Сложение над 𝔽<sub>p<\/sub><\/a>/, "the Montgomery card opens addition over Fp");
   const { THESIS_CURVE, THESIS_SUM } = await import("../site/js/forms.js");
   assert.deepEqual(
     [THESIS_CURVE.A, THESIS_CURVE.B, THESIS_CURVE.p, ...THESIS_SUM.P, ...THESIS_SUM.Q],
     [montgomeryPage.a, montgomeryPage.b, montgomeryPage.p, montgomeryPage.px, montgomeryPage.py, montgomeryPage.qx, montgomeryPage.qy],
     "the hero plot must show exactly the defaults of the Montgomery page",
   );
+});
+
+test("every example chip on every page leads to a sum that passes the on-curve check", async () => {
+  const { REAL_MONTGOMERY_FORM, REAL_WEIERSTRASS_FORM, MONTGOMERY_FORM, WEIERSTRASS_FORM } = await import("../site/js/forms.js");
+  const { snapToCurve, snapToRealCurve } = await import("../site/js/snap.js");
+  const { additionStages } = await import("../site/js/steps.js");
+  const { realAdditionStages } = await import("../site/js/real-steps.js");
+  const forms = { montgomery: [MONTGOMERY_FORM, REAL_MONTGOMERY_FORM], weierstrass: [WEIERSTRASS_FORM, REAL_WEIERSTRASS_FORM] };
+  for (const [name, [fieldForm, realForm]] of Object.entries(forms)) {
+    for (const op of ["add", "reals-add"]) {
+      const page = `${name}-${op}.html`;
+      const chips = [...read(page).matchAll(/class="chip" href="[^"?]+\?([^"]+)">([^<]+)</g)];
+      assert.ok(chips.length >= 4, `${page} offers examples`);
+      for (const [, query, label] of chips) {
+        const v = Object.fromEntries(query.split("&amp;").map((pair) => pair.split("=")).map(([k, x]) => [k, Number(x)]));
+        const real = op === "reals-add";
+        const curve = real ? realForm.create(v) : fieldForm.create(v);
+        const snap = real ? snapToRealCurve : snapToCurve;
+        const P = snap(curve, [v.px, v.py], [v.px, v.py]);
+        const Q = snap(curve, [v.qx, v.qy], [v.qx, v.qy]);
+        assert.deepEqual([P, Q], [[v.px, v.py], [v.qx, v.qy]], `${page} «${label}»: example points must already lie on the curve, otherwise the chip highlights nothing`);
+        const result = real ? realAdditionStages(curve, P, Q, realForm.names) : additionStages(curve, P, Q, fieldForm.names);
+        if (result.check) assert.equal(result.check.holds, true, `${page} «${label}»: R must pass the on-curve check`);
+      }
+    }
+  }
 });

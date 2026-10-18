@@ -1,5 +1,3 @@
-import { RealCurve } from "./curve.js";
-import { weierstrassEquation } from "./forms.js";
 import { FormPage, PointInput, pointBadges } from "./page.js";
 import { Plot } from "./plot.js";
 import { realCurvePolyline, realLine, realPlotRange } from "./real-geometry.js";
@@ -21,15 +19,20 @@ function coordinateText(point, index) {
 }
 
 class RealPage extends FormPage {
-  constructor(root) {
+  constructor(root, form) {
     super(root);
+    this.form = form;
     this.pInput = new PointInput(root, "p", snapToRealCurve);
     this.plot = new Plot(root.querySelector("#plot"));
   }
 
   curve() {
-    const finite = (name) => this.checked(name, Number.isFinite, `${name} — конечное число; оставлено прежнее значение.`);
-    return new RealCurve({ a: finite("a"), b: finite("b") });
+    const a = this.checked("a", Number.isFinite, "a — конечное число; оставлено прежнее значение.");
+    const b = this.form.positiveB
+      ? this.checked("b", (value) => Number.isFinite(value) && value > 0, "B > 0: при B ≤ 0 над ℝ получается другая кривая; оставлено прежнее значение.")
+      : this.checked("b", Number.isFinite, "b — конечное число; оставлено прежнее значение.");
+    this.coefficients = { a, b };
+    return this.form.create({ a, b });
   }
 
   renderCurve(curve, range, scene) {
@@ -39,15 +42,15 @@ class RealPage extends FormPage {
       caption: "График: кривая над ℝ",
       ...scene,
     });
-    this.html(".curve-equation", weierstrassEquation(curve));
+    this.html(".curve-equation", this.form.equation(this.coefficients));
     this.toggle(".curve-singular-warning", curve.isSingular());
     this.markPreset();
   }
 }
 
 export class RealAdditionPage extends RealPage {
-  constructor(root) {
-    super(root);
+  constructor(root, form) {
+    super(root, form);
     this.qInput = new PointInput(root, "q", snapToRealCurve);
   }
 
@@ -74,7 +77,7 @@ export class RealAdditionPage extends RealPage {
     this.text(".sum-q", formatRealPoint(Q));
     this.text(".sum-r", formatRealPoint(R));
     this.toggle(".legend-third", R !== null && R[1] !== 0);
-    renderStages(this.root.querySelector("#steps ol"), realAdditionStages(curve, P, Q));
+    renderStages(this.root.querySelector("#steps ol"), realAdditionStages(curve, P, Q, this.form.names));
     this.emit({ curve, P, Q, trace });
   }
 }

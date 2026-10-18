@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { RealCurve, montgomery, weierstrass } from "../site/js/curve.js";
+import { montgomery, realWeierstrass, weierstrass } from "../site/js/curve.js";
 import { PointInput } from "../site/js/page.js";
 import { snapToRealCurve } from "../site/js/snap.js";
 
@@ -45,7 +45,7 @@ test("editing a coordinate makes the snapped result the new intended point", () 
 test("over ℝ a curve change and its undo also restore the point", () => {
   const root = fakeRoot({ px: 1, py: 2 });
   const P = new PointInput(root, "p", snapToRealCurve);
-  P.snap(new RealCurve({ a: -7, b: 10 }));
-  P.snap(new RealCurve({ a: 3, b: 10 }), "a");
-  assert.deepEqual(P.snap(new RealCurve({ a: -7, b: 10 }), "a"), [1, 2], "a = −7 → 3 → −7 must bring P back to (1, 2)");
+  P.snap(realWeierstrass({ a: -7, b: 10 }));
+  P.snap(realWeierstrass({ a: 3, b: 10 }), "a");
+  assert.deepEqual(P.snap(realWeierstrass({ a: -7, b: 10 }), "a"), [1, 2], "a = −7 → 3 → −7 must bring P back to (1, 2)");
 });

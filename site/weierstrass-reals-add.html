@@ -3,34 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Сложение точек над ℝ</title>
-<meta name="description" content="Геометрия закона сложения точек эллиптической кривой над вещественными числами: прямая через P и Q, третья точка и её отражение.">
+<title>Сложение точек над ℝ · Форма Вейерштрасса</title>
+<meta name="description" content="Сложение точек над ℝ: форма вейерштрасса y² = x³ + ax + b, график, ход вычисления по шагам.">
 <link rel="stylesheet" href="/core/gateway.css">
 <script src="/core/gateway.js"></script>
 <link rel="stylesheet" href="css/site.css">
-<script type="module" src="js/reals-add.js"></script>
+<script type="module" src="js/app.js"></script>
 </head>
 <body>
-<main id="main" class="gw-wrap">
-  <nav class="subnav" aria-label="Инструменты">
-    <a href="index.html">Обзор</a>
-    <a href="montgomery-add.html">Сложение · Монтгомери</a>
-    <a href="modk-add.html">Сложение · Вейерштрасс</a>
-    <a href="montgomery-mul.html">Умножение над 𝔽<sub>p</sub></a>
-    <a href="reals-add.html" aria-current="page">Сложение над ℝ</a>
-    <a href="reals-mul.html">Умножение над ℝ</a>
-    <span class="subnav-sep" aria-hidden="true"></span>
-    <a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a>
-    <a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a>
+<main id="main" class="gw-wrap" data-form="weierstrass" data-op="reals-add">
+  <nav class="sitenav" aria-label="Разделы">
+    <div class="form-tabs">
+      <a class="form-tab" href="montgomery-reals-add.html"><b>Форма Монтгомери</b><span>By² = x³ + Ax² + x</span></a>
+      <a class="form-tab" href="weierstrass-reals-add.html" aria-current="true"><b>Форма Вейерштрасса</b><span>y² = x³ + ax + b</span></a>
+      <span class="sitenav-links"><a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a><a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a></span>
+    </div>
+    <div class="op-tabs">
+      <a href="weierstrass-add.html">Сложение над 𝔽<sub>p</sub></a>
+      <a href="weierstrass-mul.html">Умножение над 𝔽<sub>p</sub></a>
+      <a href="weierstrass-reals-add.html" aria-current="page">Сложение над ℝ</a>
+      <a href="weierstrass-reals-mul.html">Умножение над ℝ</a>
+    </div>
   </nav>
   <div class="gw-page-head">
-    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки над 𝔽<sub>p</sub></a> / Сложение над ℝ</div>
+    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки эллиптических кривых</a> / Форма Вейерштрасса / Сложение над ℝ</div>
+    <p class="gw-eyebrow">Форма Вейерштрасса · y² = x³ + ax + b</p>
     <h1>Сложение точек над ℝ</h1>
     <p class="gw-lead">Над вещественными числами кривая — гладкая линия, и закон сложения виден буквально: прямая через <span class="m">P</span> и <span class="m">Q</span> пересекает кривую в третьей точке −<span class="m">R</span>, её отражение относительно оси <span class="m">x</span> — это <span class="m">R</span> = <span class="m">P</span> + <span class="m">Q</span>.</p>
   </div>
   <div class="tool">
     <section class="card plot-card" aria-label="График">
-      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=3&amp;qy=4">P + Q</a><a class="chip" href="reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=1&amp;qy=2">2P</a><a class="chip" href="reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=1&amp;qy=-2">P + (−P) = ∞</a><a class="chip" href="reals-add.html?a=-4&amp;b=1&amp;px=0&amp;py=1&amp;qx=2&amp;qy=1">Две компоненты</a></div>
+      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=3&amp;qy=4">P + Q</a><a class="chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=1&amp;qy=2">2P</a><a class="chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=1&amp;qy=-2">P + (−P) = ∞</a><a class="chip" href="weierstrass-reals-add.html?a=-4&amp;b=1&amp;px=0&amp;py=1&amp;qx=2&amp;qy=1">Две компоненты</a></div>
       <div id="plot"></div>
       <ul class="legend" aria-label="Легенда графика">
         <li><svg viewBox="0 0 22 14" aria-hidden="true"><path d="M2 12 C 8 2, 14 2, 20 12" fill="none" stroke="var(--curve)" stroke-width="2"/></svg>кривая над ℝ</li>
@@ -49,7 +52,7 @@
       <section class="card panel" aria-labelledby="points-h">
         <h2 id="points-h">Параметры и точки</h2>
         <form id="form" onsubmit="return false">
-          <fieldset><legend>Коэффициенты</legend><div class="row two"><div class="field"><label for="coefficient-a">a</label><input id="coefficient-a" name="a" value="-7" type="number" step="1"></div><div class="field"><label for="coefficient-b">b</label><input id="coefficient-b" name="b" value="10" type="number" step="1"></div></div></fieldset>
+          <fieldset><legend>Коэффициенты</legend><div class="row two"><div class="field"><label for="coefficient-a">a</label><input id="coefficient-a" name="a" value="-7" type="number" step="any" inputmode="decimal"></div><div class="field"><label for="coefficient-b">b</label><input id="coefficient-b" name="b" value="10" type="number" step="any" inputmode="decimal"></div></div></fieldset>
           <fieldset><legend><span class="dot" style="background:var(--p)"></span>Точка <span class="m">P</span></legend><div class="row two">
             <div class="field is-p"><label for="point-p-x">x</label><input id="point-p-x" name="px" value="1" type="number" step="any" inputmode="decimal"></div>
             <div class="field is-p"><label for="point-p-y">y</label><input id="point-p-y" name="py" value="2" type="number" step="any" inputmode="decimal"></div></div></fieldset>
@@ -66,11 +69,11 @@
         <h2 id="steps-h">Ход вычисления</h2>
         <ol class="steps-list"></ol>
       </section>
-      <div class="callout"><span aria-hidden="true">⇄</span><p><b>Над конечным полем — те же формулы.</b> Деление заменяется умножением на обратный по модулю <span class="m">p</span>, а прямая «наматывается» на квадрат <span class="m">p</span>×<span class="m">p</span>. <a href="modk-add.html">Сложение над 𝔽<sub>p</sub> →</a></p></div>
+      <div class="callout"><span aria-hidden="true">⇄</span><p><b>Над конечным полем — те же формулы.</b> Деление заменяется умножением на обратный по модулю <span class="m">p</span>, а прямая «наматывается» на квадрат <span class="m">p</span>×<span class="m">p</span>. <a href="weierstrass-add.html">Сложение над <span class="bb">𝔽</span><sub>p</sub> →</a></p></div>
     </div>
   </div>
   <section class="gw-section page-note">
-    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы Вейерштрасса и ℝ основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
+    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы формы Вейерштрасса основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
   </section>
 </main>
 </body>

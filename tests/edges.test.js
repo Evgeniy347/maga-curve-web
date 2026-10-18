@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { RealCurve, cubicRoots, montgomery, weierstrass } from "../site/js/curve.js";
+import { cubicRoots, montgomery, realWeierstrass, weierstrass } from "../site/js/curve.js";
 import { isPrime, largestPrimeFactor, mod, squareRoots } from "../site/js/field.js";
 import { MONTGOMERY_FORM } from "../site/js/forms.js";
-import { formatPoint, isValidModulus, isValidScalar, lineEquation, queryValues } from "../site/js/page.js";
-import { Plot, plotRange, tickSize } from "../site/js/plot.js";
+import { formatCoordinate, formatPoint, isValidModulus, isValidScalar, lineEquation, queryValues } from "../site/js/page.js";
+import { Plot, plotRange, tickSize, ticks } from "../site/js/plot.js";
 import { realLineEquation } from "../site/js/reals-page.js";
 import { realAdditionStages, realMultiplicationStages } from "../site/js/real-steps.js";
 import { snapToCurve, snapToRealCurve } from "../site/js/snap.js";
@@ -63,8 +63,8 @@ test("real roots and singularity", () => {
     assert.equal(roots.length, 3, `x³ + ${a}x + ${b} has three real roots`);
     for (const x of roots) assert.ok(Math.abs(x ** 3 + a * x + b) < 1e-9, `${x} must be a root of x³ + ${a}x + ${b}`);
   }
-  assert.equal(new RealCurve({ a: -3, b: 2 }).isSingular(), true, "4·(−27) + 27·4 = 0: cusp-free node at x = 1");
-  assert.equal(new RealCurve({ a: -7, b: 10 }).isSingular(), false, "the default real curve is smooth");
+  assert.equal(realWeierstrass({ a: -3, b: 2 }).isSingular(), true, "4·(−27) + 27·4 = 0: cusp-free node at x = 1");
+  assert.equal(realWeierstrass({ a: -7, b: 10 }).isSingular(), false, "the default real curve is smooth");
 });
 
 test("form equation shows B only when it is not 1", () => {
@@ -127,25 +127,35 @@ test("snapping: ties, exact candidates after a curve change, and the real half-p
   assert.deepEqual(snapToCurve(curve, [18, 10], [18, 10]), [17, 10], "unchanged off-curve input after a curve change → nearest point overall");
   assert.deepEqual(snapToCurve(montgomery({ A: 6, p: 29 }), [1, 0], [1, 0]), [0, 0], "(1, 0) is not on the curve; the nearest point overall is (0, 0)");
   assert.deepEqual(snapToCurve(curve, [17, 11], [17, 10]), [11, 17], "y went up from 10: among points with y > 10 the nearest to (17, 11) is (11, 17)");
-  const real = new RealCurve({ a: -7, b: 10 });
+  const real = realWeierstrass({ a: -7, b: 10 });
   assert.deepEqual(snapToRealCurve(real, [2, 0], [1, 2]), [2, -2], "x changed and y typed as 0 while previous y > 0: take the lower half");
   assert.deepEqual(snapToRealCurve(real, [Number.NaN, 2], [1, 2]), [1, 2], "NaN keeps the previous point");
   assert.deepEqual(snapToRealCurve(real, [1, 4], [1, 2]), [-1, 4], "x unchanged, y = 4: x³ − 7x − 6 = 0 has roots −2, −1, 3; −1 and 3 are both 2 away from x = 1, the leftmost wins as in the original");
-  const oval = new RealCurve({ a: -4, b: 1 });
+  const oval = realWeierstrass({ a: -4, b: 1 });
   assert.deepEqual(snapToRealCurve(oval, [3, 1], [2, 1]), [3, 4], "beyond the last root x is valid: y = √(27 − 12 + 1) = 4");
 });
 
 test("real narration: vertical messages, chain forms and line equations", () => {
-  const curve = new RealCurve({ a: -4, b: 0 });
+  const curve = realWeierstrass({ a: -4, b: 0 });
   assert.match(realAdditionStages(curve, [2, 0], [2, 0]).message, /^касательная/, "tangent at a root is vertical");
   assert.match(realAdditionStages(curve, [-1, Math.sqrt(3)], [-1, -Math.sqrt(3)]).message, /^x₁ = x₂/, "opposite points");
-  const { stages } = realMultiplicationStages(new RealCurve({ a: -7, b: 10 }), 5, [1, 2]);
+  const { stages } = realMultiplicationStages(realWeierstrass({ a: -7, b: 10 }), 5, [1, 2]);
   assert.deepEqual(stages[0].steps.map((s) => s.forms[0]), ["P", "2·[1]P (бит 0)", "2·[2]P (бит 1)", "[4]P + P"], "each link says how it was obtained");
-  const real = new RealCurve({ a: -7, b: 10 });
+  const real = realWeierstrass({ a: -7, b: 10 });
   assert.equal(realLineEquation(real.addTrace([1, 2], [3, 4]), [1, 2]), "y = 1x + 1", "through (1, 2) and (3, 4)");
   assert.equal(realLineEquation(real.addTrace([1, 2], [3, -4]), [1, 2]), "y = −3x + 5", "negative slope");
   assert.equal(realLineEquation(real.addTrace([1, 2], [2, 2]), [1, 2]), "y = 0x + 2", "horizontal line");
   assert.equal(realLineEquation(real.addTrace([3, -4], [1, 2]), [3, -4]), "y = −3x + 5", "the same line from the other point");
   assert.equal(realLineEquation({ lambda: 2 }, [0, -1]), "y = 2x − 1", "negative intercept uses the minus sign");
   assert.equal(realLineEquation({ lambda: undefined }, [2, 0]), "x = 2", "vertical line");
+});
+
+test("leftover mutants: boundaries that the main tests did not pin down", () => {
+  assert.equal(formatCoordinate(null, 0), "∞", "R = ∞ is shown as ∞ in the readonly field");
+  assert.equal(formatCoordinate(undefined, 1), "—", "an undefined sum is shown as a dash");
+  assert.equal(formatCoordinate([19, 5], 1), "5", "a finite coordinate is printed as is");
+  assert.deepEqual(reductionTail(0, 29), [], "0 needs no reduction");
+  assert.equal(tickSize(0, 75, 100), 25, "norm = 2.5 with magnitude 10 → step 25");
+  assert.deepEqual(ticks(3, 28, 100), [10, 20], "range 25 over 100 px gives step 10; ticks start at the first multiple of 10 above min = 3");
+  assert.equal(realLineEquation({ lambda: 1 }, [1, 1]), "y = 1x + 0", "a zero intercept keeps the plus sign");
 });

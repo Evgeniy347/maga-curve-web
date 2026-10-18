@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Точки над 𝔽p — сложение на эллиптических кривых</title>
-<meta name="description" content="Учебный интерактив к магистерской диссертации о Curve25519: сложение точек эллиптической кривой над конечным полем с ходом вычисления по модулю.">
+<title>Точки эллиптических кривых — сложение и умножение</title>
+<meta name="description" content="Учебный интерактив к магистерской диссертации о Curve25519: сложение и умножение точек эллиптической кривой над 𝔽p и ℝ в формах Монтгомери и Вейерштрасса.">
 <link rel="stylesheet" href="/core/gateway.css">
 <script src="/core/gateway.js"></script>
 <link rel="stylesheet" href="css/site.css">
@@ -12,46 +12,51 @@
 </head>
 <body>
 <main id="main" class="gw-wrap">
-  <nav class="subnav" aria-label="Инструменты">
-    <a href="index.html" aria-current="page">Обзор</a>
-    <a href="montgomery-add.html">Сложение · Монтгомери</a>
-    <a href="modk-add.html">Сложение · Вейерштрасс</a>
-    <a href="montgomery-mul.html">Умножение над 𝔽<sub>p</sub></a>
-    <a href="reals-add.html">Сложение над ℝ</a>
-    <a href="reals-mul.html">Умножение над ℝ</a>
-    <span class="subnav-sep" aria-hidden="true"></span>
-    <a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a>
-    <a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a>
+  <nav class="sitenav" aria-label="Разделы">
+    <div class="form-tabs">
+      <a class="form-tab" href="montgomery-add.html"><b>Форма Монтгомери</b><span>By² = x³ + Ax² + x</span></a>
+      <a class="form-tab" href="weierstrass-add.html"><b>Форма Вейерштрасса</b><span>y² = x³ + ax + b</span></a>
+      <span class="sitenav-links"><a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a><a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a></span>
+    </div>
   </nav>
   <section class="hero">
     <div>
       <p class="gw-eyebrow">Учебный интерактив · магистерская диссертация</p>
-      <h1>Сложение точек эллиптической кривой над <span class="bb">𝔽</span><sub>p</sub></h1>
-      <p class="gw-lead">Секущая через <span class="m">P</span> и <span class="m">Q</span> над конечным полем «наматывается» на квадрат <span class="m">p</span>×<span class="m">p</span>. Здесь её видно на графике, а каждое действие с λ, <span class="m">x</span>₃ и <span class="m">y</span>₃ разобрано по модулю — на той же кривой, что в ручном прогоне диссертации.</p>
+      <h1>Точки эллиптических кривых</h1>
+      <p class="gw-lead">Сложение и умножение точек над конечным полем <span class="bb">𝔽</span><sub>p</sub> и над ℝ — в формах Монтгомери и Вейерштрасса. Над <span class="bb">𝔽</span><sub>p</sub> секущая «наматывается» на квадрат <span class="m">p</span>×<span class="m">p</span>, и каждое действие с λ, <span class="m">x</span>₃ и <span class="m">y</span>₃ разобрано по модулю — на той же кривой, что в ручном прогоне диссертации.</p>
       <p class="meta"><a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a></p>
     </div>
     <figure class="card hero-plot" style="margin:0"><div id="hero-plot"></div><figcaption><span class="mono">(2, 11) + (7, 8) = (19, 5)</span> на <span class="mono">y² = x³ + 6x² + x</span> над <span class="bb">𝔽</span><sub>29</sub></figcaption></figure>
   </section>
   <section class="block" aria-labelledby="tools">
-    <div class="block-head"><p class="gw-eyebrow">Инструменты</p><h2 id="tools">Сложение и умножение точек</h2><p>Над конечным полем — кривая из диссертации в формах Монтгомери и Вейерштрасса. Над ℝ — те же операции на гладкой кривой, где прямую видно целиком.</p></div>
-    <div class="cards">
-      <a class="tool-card card" href="montgomery-add.html"><span class="gw-eyebrow">𝔽<sub>p</sub> · из диссертации</span><h3>Кривая Монтгомери</h3><p class="eqline"><span class="m">By</span>² = <span class="m">x</span>³ + <span class="m">Ax</span>² + <span class="m">x</span></p><p>Кривая с кофактором 8, как у X25519: порядки точек, примеры [2]G и −G + G, ход вычисления по модулю.</p><span class="go">Открыть →</span></a>
-      <a class="tool-card card" href="modk-add.html"><span class="gw-eyebrow">𝔽<sub>p</sub> · классика</span><h3>Кривая Вейерштрасса</h3><p class="eqline"><span class="m">y</span>² = <span class="m">x</span>³ + <span class="m">ax</span> + <span class="m">b</span></p><p>Та же кривая после замены X = x + 2: шаги можно сравнить с формой Монтгомери.</p><span class="go">Открыть →</span></a>
-      <a class="tool-card card" href="montgomery-mul.html"><span class="gw-eyebrow">𝔽<sub>p</sub> · умножение</span><h3>Умножение на число над 𝔽<sub>p</sub></h3><p class="eqline"><span class="m">Q</span> = [<span class="m">d</span>]<span class="m">G</span></p><p>Ключ <span class="mono">d = 538</span> из ручного прогона: 9 удвоений и 3 сложения, каждое звено с λ, x₃, y₃.</p><span class="go">Открыть →</span></a>
-      <a class="tool-card card" href="reals-add.html"><span class="gw-eyebrow">ℝ · сложение</span><h3>Сложение над ℝ</h3><p class="eqline"><span class="m">R</span> = <span class="m">P</span> + <span class="m">Q</span></p><p>Геометрия закона сложения: прямая через <span class="m">P</span> и <span class="m">Q</span>, третья точка пересечения и её отражение.</p><span class="go">Открыть →</span></a>
-      <a class="tool-card card" href="reals-mul.html"><span class="gw-eyebrow">ℝ · умножение</span><h3>Умножение на число над ℝ</h3><p class="eqline"><span class="m">Q</span> = <span class="m">n</span>·<span class="m">P</span></p><p>Бинарный метод «удвоить и прибавить»: каждое удвоение и сложение по шагам.</p><span class="go">Открыть →</span></a>
+    <div class="block-head"><p class="gw-eyebrow">Инструменты</p><h2 id="tools">Две формы — четыре операции</h2><p>Каждая форма открывается на кривой диссертации: сложение и умножение над <span class="bb">𝔽</span><sub>p</sub> и над ℝ.</p></div>
+    <div class="form-cards">
+      <section class="card form-card">
+        <p class="gw-eyebrow">Кривая диссертации · как X25519</p>
+        <h3>Форма Монтгомери</h3>
+        <p class="eqline">By² = x³ + Ax² + x</p>
+        <p><span class="mono">y² = x³ + 6x² + x</span> над <span class="bb">𝔽</span><sub>p</sub> при <span class="m">p</span> = 29: #<span class="m">E</span> = 40 = 8·5, <span class="m">G</span> = (9, 8) порядка 5. Над ℝ — овал и ветвь.</p>
+        <ul class="tool-links"><li><a href="montgomery-add.html">Сложение над 𝔽<sub>p</sub></a></li><li><a href="montgomery-mul.html">Умножение над 𝔽<sub>p</sub></a></li><li><a href="montgomery-reals-add.html">Сложение над ℝ</a></li><li><a href="montgomery-reals-mul.html">Умножение над ℝ</a></li></ul>
+      </section>
+      <section class="card form-card">
+        <p class="gw-eyebrow">Классическая форма · Corbellini</p>
+        <h3>Форма Вейерштрасса</h3>
+        <p class="eqline">y² = x³ + ax + b</p>
+        <p>Та же кривая после замены <span class="mono">X = x + 2</span>: <span class="mono">y² = x³ + 18x + 14</span>. Шаги сравниваются с формой Монтгомери.</p>
+        <ul class="tool-links"><li><a href="weierstrass-add.html">Сложение над 𝔽<sub>p</sub></a></li><li><a href="weierstrass-mul.html">Умножение над 𝔽<sub>p</sub></a></li><li><a href="weierstrass-reals-add.html">Сложение над ℝ</a></li><li><a href="weierstrass-reals-mul.html">Умножение над ℝ</a></li></ul>
+      </section>
     </div>
   </section>
   <section class="block" aria-labelledby="how-h">
     <div class="block-head"><p class="gw-eyebrow">Как пользоваться</p><h2 id="how-h">Три шага</h2></div>
     <ol class="how">
-<li><b>Выберите точки.</b> Введите координаты <span class="m">P</span> и <span class="m">Q</span> или нажмите готовый пример — неверная точка сама притянется к кривой.</li>
-<li><b>Посмотрите на секущую.</b> Прямая <span class="mono">y ≡ λx + c</span> «наматывается» на квадрат <span class="m">p</span>×<span class="m">p</span> и находит третью точку −<span class="m">R</span>.</li>
-<li><b>Проверьте арифметику.</b> Каждый шаг λ, <span class="m">x</span>₃, <span class="m">y</span>₃ показан с приведением по модулю — как при ручном прогоне.</li>
+<li><b>Выберите форму и операцию.</b> Вкладки вверху: форма Монтгомери или Вейерштрасса, затем сложение или умножение над <span class="bb">𝔽</span><sub>p</sub> или ℝ.</li>
+<li><b>Задайте точки.</b> Введите координаты или нажмите готовый пример — неверная точка сама притянется к кривой.</li>
+<li><b>Проверьте арифметику.</b> Каждый шаг λ, <span class="m">x</span>₃, <span class="m">y</span>₃ показан с вычислением — как при ручном прогоне.</li>
 </ol>
   </section>
   <section class="gw-section page-note">
-    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы Вейерштрасса и ℝ основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
+    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы формы Вейерштрасса основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
   </section>
 </main>
 </body>

@@ -3,29 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Умножение точки на число над 𝔽p</title>
-<meta name="description" content="Q = [d]G на кривой диссертации: бинарный метод «удвоить и прибавить» по шагам, как в ручном прогоне для d = 538.">
+<title>Умножение точки на число над 𝔽p · Форма Монтгомери</title>
+<meta name="description" content="Умножение точки на число над 𝔽p: форма монтгомери By² = x³ + Ax² + x, график, ход вычисления по шагам.">
 <link rel="stylesheet" href="/core/gateway.css">
 <script src="/core/gateway.js"></script>
 <link rel="stylesheet" href="css/site.css">
-<script type="module" src="js/montgomery-mul.js"></script>
+<script type="module" src="js/app.js"></script>
 </head>
 <body>
-<main id="main" class="gw-wrap">
-  <nav class="subnav" aria-label="Инструменты">
-    <a href="index.html">Обзор</a>
-    <a href="montgomery-add.html">Сложение · Монтгомери</a>
-    <a href="modk-add.html">Сложение · Вейерштрасс</a>
-    <a href="montgomery-mul.html" aria-current="page">Умножение над 𝔽<sub>p</sub></a>
-    <a href="reals-add.html">Сложение над ℝ</a>
-    <a href="reals-mul.html">Умножение над ℝ</a>
-    <span class="subnav-sep" aria-hidden="true"></span>
-    <a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a>
-    <a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a>
+<main id="main" class="gw-wrap" data-form="montgomery" data-op="mul">
+  <nav class="sitenav" aria-label="Разделы">
+    <div class="form-tabs">
+      <a class="form-tab" href="montgomery-mul.html" aria-current="true"><b>Форма Монтгомери</b><span>By² = x³ + Ax² + x</span></a>
+      <a class="form-tab" href="weierstrass-mul.html"><b>Форма Вейерштрасса</b><span>y² = x³ + ax + b</span></a>
+      <span class="sitenav-links"><a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a><a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a></span>
+    </div>
+    <div class="op-tabs">
+      <a href="montgomery-add.html">Сложение над 𝔽<sub>p</sub></a>
+      <a href="montgomery-mul.html" aria-current="page">Умножение над 𝔽<sub>p</sub></a>
+      <a href="montgomery-reals-add.html">Сложение над ℝ</a>
+      <a href="montgomery-reals-mul.html">Умножение над ℝ</a>
+    </div>
   </nav>
   <div class="gw-page-head">
-    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки над 𝔽<sub>p</sub></a> / Умножение над 𝔽<sub>p</sub></div>
-    <h1>Умножение точки на число над 𝔽<sub>p</sub></h1>
+    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки эллиптических кривых</a> / Форма Монтгомери / Умножение над 𝔽<sub>p</sub></div>
+    <p class="gw-eyebrow">Форма Монтгомери · By² = x³ + Ax² + x</p>
+    <h1>Умножение точки на число над <span class="bb">𝔽</span><sub>p</sub></h1>
     <p class="gw-lead">Так владелец ключа считает открытый ключ <span class="m">Q</span> = [<span class="m">d</span>]<span class="m">G</span>: по битам <span class="m">d</span> слева направо удвоить и, если бит равен 1, прибавить <span class="m">G</span>. По умолчанию — ключ <span class="mono">d = 538</span> из ручного прогона на кривой диссертации.</p>
   </div>
   <div class="tool">
@@ -33,7 +36,7 @@
       <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=538&amp;px=9&amp;py=8">d = 538</a><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=3&amp;px=9&amp;py=8">[3]G</a><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=5&amp;px=9&amp;py=8">[5]G = ∞</a><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=-1&amp;px=9&amp;py=8">[−1]G</a><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=13&amp;px=19&amp;py=5">Точка порядка 40</a></div>
       <div id="plot"></div>
       <ul class="legend" aria-label="Легенда графика">
-        <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg>точки кривой</li>
+        <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg><span class="legend-points">точки кривой</span></li>
         <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="6" fill="none" stroke="var(--p)" stroke-width="1.5"/></svg><span class="legend-subgroup"></span></li>
       </ul>
       <p class="sum-line mono" aria-live="polite">[<b class="sum-n"></b>]<span class="sum-p" style="color:var(--p)"></span> = <b class="sum-r"></b></p>
@@ -53,9 +56,9 @@
         <p class="alert composite-warning" role="alert">⚠ <span><span class="m">p</span> не простое: в 𝔽<sub>p</sub> есть необратимые элементы, сумма может быть не определена.</span></p>
       </section>
       <section class="card panel" aria-labelledby="points-h">
-        <h2 id="points-h">Параметры</h2>
+        <h2 id="points-h">Параметры и точки</h2>
         <form id="form" onsubmit="return false">
-          <fieldset><legend>Коэффициенты и поле</legend><div class="row"><div class="field"><label for="coefficient-a">A</label><input id="coefficient-a" name="a" value="6" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-b">B</label><input id="coefficient-b" name="b" value="1" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1" min="2" inputmode="numeric"></div></div></fieldset>
+          <fieldset><legend>Коэффициенты и поле</legend><div class="row"><div class="field"><label for="coefficient-a">A</label><input id="coefficient-a" name="a" value="6" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-b">B</label><input id="coefficient-b" name="b" value="1" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1" inputmode="numeric"></div></div></fieldset>
           <fieldset><legend>Множитель (ключ)</legend><div class="row two"><div class="field"><label for="multiplier-n">n</label><input id="multiplier-n" name="n" value="538" type="number" step="1" inputmode="numeric"></div></div></fieldset>
           <fieldset><legend><span class="dot" style="background:var(--p)"></span>Точка <span class="m">P</span> <span class="hint">· по умолчанию <span class="m">G</span> = (9, 8)</span></legend><div class="row two">
             <div class="field is-p"><label for="point-p-x">x</label><input id="point-p-x" name="px" value="9" type="number" step="1" inputmode="numeric"></div>
@@ -74,7 +77,7 @@
     </div>
   </div>
   <section class="gw-section page-note">
-    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы Вейерштрасса и ℝ основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
+    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы формы Вейерштрасса основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
   </section>
 </main>
 </body>

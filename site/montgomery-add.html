@@ -3,29 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Сложение точек кривой Монтгомери</title>
-<meta name="description" content="Кривая из диссертации — та же форма и тот же кофактор 8, что у X25519: секущая по модулю, R = P + Q и ход вычисления по шагам.">
+<title>Сложение точек над 𝔽p · Форма Монтгомери</title>
+<meta name="description" content="Сложение точек над 𝔽p: форма монтгомери By² = x³ + Ax² + x, график, ход вычисления по шагам.">
 <link rel="stylesheet" href="/core/gateway.css">
 <script src="/core/gateway.js"></script>
 <link rel="stylesheet" href="css/site.css">
-<script type="module" src="js/montgomery-add.js"></script>
+<script type="module" src="js/app.js"></script>
 </head>
 <body>
-<main id="main" class="gw-wrap">
-  <nav class="subnav" aria-label="Инструменты">
-    <a href="index.html">Обзор</a>
-    <a href="montgomery-add.html" aria-current="page">Сложение · Монтгомери</a>
-    <a href="modk-add.html">Сложение · Вейерштрасс</a>
-    <a href="montgomery-mul.html">Умножение над 𝔽<sub>p</sub></a>
-    <a href="reals-add.html">Сложение над ℝ</a>
-    <a href="reals-mul.html">Умножение над ℝ</a>
-    <span class="subnav-sep" aria-hidden="true"></span>
-    <a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a>
-    <a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a>
+<main id="main" class="gw-wrap" data-form="montgomery" data-op="add">
+  <nav class="sitenav" aria-label="Разделы">
+    <div class="form-tabs">
+      <a class="form-tab" href="montgomery-add.html" aria-current="true"><b>Форма Монтгомери</b><span>By² = x³ + Ax² + x</span></a>
+      <a class="form-tab" href="weierstrass-add.html"><b>Форма Вейерштрасса</b><span>y² = x³ + ax + b</span></a>
+      <span class="sitenav-links"><a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a><a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a></span>
+    </div>
+    <div class="op-tabs">
+      <a href="montgomery-add.html" aria-current="page">Сложение над 𝔽<sub>p</sub></a>
+      <a href="montgomery-mul.html">Умножение над 𝔽<sub>p</sub></a>
+      <a href="montgomery-reals-add.html">Сложение над ℝ</a>
+      <a href="montgomery-reals-mul.html">Умножение над ℝ</a>
+    </div>
   </nav>
   <div class="gw-page-head">
-    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки над 𝔽<sub>p</sub></a> / Монтгомери</div>
-    <h1>Сложение точек кривой Монтгомери</h1>
+    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки эллиптических кривых</a> / Форма Монтгомери / Сложение над 𝔽<sub>p</sub></div>
+    <p class="gw-eyebrow">Форма Монтгомери · By² = x³ + Ax² + x</p>
+    <h1>Сложение точек над <span class="bb">𝔽</span><sub>p</sub></h1>
     <p class="gw-lead">Кривая из диссертации — та же форма и тот же кофактор 8, что у X25519. Выберите <span class="m">P</span> и <span class="m">Q</span>: секущая «наматывается» на квадрат <span class="m">p</span>×<span class="m">p</span>, третья точка пересечения отражается в <span class="m">R</span>.</p>
   </div>
   <div class="tool">
@@ -33,7 +36,7 @@
       <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=2&amp;py=11&amp;qx=7&amp;qy=8">P + Q</a><a class="chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=9&amp;py=8&amp;qx=9&amp;qy=8">[2]G</a><a class="chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=25&amp;py=17&amp;qx=9&amp;qy=8">[3]G = [2]G + G</a><a class="chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=9&amp;py=21&amp;qx=9&amp;qy=8">−G + G = ∞</a></div>
       <div id="plot"></div>
       <ul class="legend" aria-label="Легенда графика">
-        <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg><span class="legend-points"></span></li>
+        <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg><span class="legend-points">точки кривой</span></li>
         <li><svg viewBox="0 0 22 14" aria-hidden="true"><path d="M2 12 20 2" stroke="var(--chord)" stroke-width="2"/></svg><span class="legend-line mono"></span></li>
         <li class="legend-third"><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="5" fill="none" stroke="var(--r)" stroke-width="2" stroke-dasharray="3 3"/></svg>третья точка −R, отражение −R → R</li>
       </ul>
@@ -55,7 +58,7 @@
       <section class="card panel" aria-labelledby="points-h">
         <h2 id="points-h">Параметры и точки</h2>
         <form id="form" onsubmit="return false">
-          <fieldset><legend>Коэффициенты и поле</legend><div class="row"><div class="field"><label for="coefficient-a">A</label><input id="coefficient-a" name="a" value="6" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-b">B</label><input id="coefficient-b" name="b" value="1" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1" min="2" inputmode="numeric"></div></div></fieldset>
+          <fieldset><legend>Коэффициенты и поле</legend><div class="row"><div class="field"><label for="coefficient-a">A</label><input id="coefficient-a" name="a" value="6" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-b">B</label><input id="coefficient-b" name="b" value="1" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1" inputmode="numeric"></div></div></fieldset>
           <fieldset><legend><span class="dot" style="background:var(--p)"></span>Точка <span class="m">P</span> <span class="hint">· порядок <b class="mono point-order-p"></b></span></legend><div class="row two">
             <div class="field is-p"><label for="point-p-x">x</label><input id="point-p-x" name="px" value="2" type="number" step="1" inputmode="numeric"></div>
             <div class="field is-p"><label for="point-p-y">y</label><input id="point-p-y" name="py" value="11" type="number" step="1" inputmode="numeric"></div></div></fieldset>
@@ -72,11 +75,11 @@
         <h2 id="steps-h">Ход вычисления · по модулю <span class="steps-modulus"></span></h2>
         <ol class="steps-list"></ol>
       </section>
-      <div class="callout"><span aria-hidden="true">⇄</span><p><b>Та же кривая в форме Вейерштрасса.</b> Замена <span class="mono">X = x + 2</span> переводит её в <span class="mono">Y² = X³ + 18X + 14</span>; λ и <span class="m">y</span> совпадают, <span class="m">x</span> сдвигаются на 2. <a href="modk-add.html">Сравнить шаги →</a></p></div>
+      <div class="callout"><span aria-hidden="true">⇄</span><p><b>Та же кривая в форме Вейерштрасса.</b> Замена <span class="mono">X = x + 2</span> переводит её в <span class="mono">Y² = X³ + 18X + 14</span>; λ и <span class="m">y</span> совпадают, <span class="m">x</span> сдвигаются на 2. <a href="weierstrass-add.html">Сравнить шаги →</a></p></div>
     </div>
   </div>
   <section class="gw-section page-note">
-    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы Вейерштрасса и ℝ основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
+    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы формы Вейерштрасса основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
   </section>
 </main>
 </body>

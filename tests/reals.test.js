@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { RealCurve, doubleAndAdd } from "../site/js/curve.js";
+import { doubleAndAdd, realWeierstrass } from "../site/js/curve.js";
 import { realCurvePolyline, realLine, realPlotRange } from "../site/js/real-geometry.js";
 import { formatRealPoint, realAdditionStages, realMultiplicationStages } from "../site/js/real-steps.js";
 import { plural } from "../site/js/steps.js";
@@ -29,7 +29,7 @@ function assertClose(actual, expected, message) {
 
 test("roots, stationary points, plot range and curve outline match the original reals page", () => {
   for (const { a, b, roots, stationary, range, polyline } of fixture.curves) {
-    const curve = new RealCurve({ a, b });
+    const curve = realWeierstrass({ a, b });
     const label = `y² = x³ + ${a}x + ${b}`;
     assertClose(curve.roots(), roots, `${label}: real roots of x³ + ax + b (Cardano / trigonometric form)`);
     assertClose(curve.stationaryPoints(), stationary, `${label}: points with 3x² + a = 0 above the axis`);
@@ -43,7 +43,7 @@ test("roots, stationary points, plot range and curve outline match the original 
 
 test("addition, the drawn line and the plot range match the original reals-add page", () => {
   for (const { a, b, p, q, r, range, line } of fixture.additions) {
-    const curve = new RealCurve({ a, b });
+    const curve = realWeierstrass({ a, b });
     const trace = curve.addTrace(p, q);
     const label = `${JSON.stringify(p)} + ${JSON.stringify(q)} on y² = x³ + ${a}x + ${b}`;
     assertClose(trace.result, r, `${label}: R`);
@@ -56,7 +56,7 @@ test("addition, the drawn line and the plot range match the original reals-add p
 
 test("scalar multiplication matches the original reals-mul page", () => {
   for (const { a, b, n, p, q, range } of fixture.multiplications) {
-    const curve = new RealCurve({ a, b });
+    const curve = realWeierstrass({ a, b });
     const product = curve.multiply(n, p);
     assertClose(product, q, `${n}·${JSON.stringify(p)} on y² = x³ + ${a}x + ${b}`);
     assertClose(realPlotRange(curve, [p, product]), range, `${n}·P: plot range must include P and Q`);
@@ -64,7 +64,7 @@ test("scalar multiplication matches the original reals-mul page", () => {
 });
 
 test("default sum P + Q = (1, 2) + (3, 4) = (−3, 2) is narrated in three stages and checked on the curve", () => {
-  const curve = new RealCurve({ a: -7, b: 10 });
+  const curve = realWeierstrass({ a: -7, b: 10 });
   const { stages, check } = realAdditionStages(curve, [1, 2], [3, 4]);
   assert.deepEqual(stages.map((stage) => stage.steps.at(-1).value), ["1", "−3", "2"], "λ = (4 − 2)/(3 − 1) = 1, x₃ = 1 − 1 − 3 = −3, y₃ = 1·(1 + 3) − 2 = 2");
   assert.equal(check.holds, true, "(−3, 2): 4 = −27 + 21 + 10");
@@ -72,7 +72,7 @@ test("default sum P + Q = (1, 2) + (3, 4) = (−3, 2) is narrated in three stage
 });
 
 test("binary method for n = 5 = 101₂ is two doublings and one addition, like the manual run for d = 538", () => {
-  const curve = new RealCurve({ a: -7, b: 10 });
+  const curve = realWeierstrass({ a: -7, b: 10 });
   const chain = doubleAndAdd(curve, 5, [1, 2]);
   assert.deepEqual(chain.map((link) => [link.action, link.multiplier]), [["start", 1], ["double", 2], ["double", 4], ["add", 5]], "1 → 2 → 4 → 5");
   const { stages } = realMultiplicationStages(curve, 5, [1, 2]);
@@ -82,18 +82,18 @@ test("binary method for n = 5 = 101₂ is two doublings and one addition, like t
 });
 
 test("negative n walks the chain on −P", () => {
-  const curve = new RealCurve({ a: -7, b: 10 });
+  const curve = realWeierstrass({ a: -7, b: 10 });
   const product = curve.multiply(-3, [1, 2]);
   assertClose(product, curve.neg(curve.multiply(3, [1, 2])), "(−3)·P = −(3·P)");
   assert.equal(realMultiplicationStages(curve, 0, [1, 2]).message, "n = 0 или P = ∞ → n·P = ∞", "0·P is the point at infinity");
 });
 
 test("snapping keeps points on the real curve the way the original page does", () => {
-  const curve = new RealCurve({ a: -7, b: 10 });
+  const curve = realWeierstrass({ a: -7, b: 10 });
   assert.deepEqual(snapToRealCurve(curve, [1, 2], [1, 2]), [1, 2], "a valid point is kept");
   assert.deepEqual(snapToRealCurve(curve, [2, 2], [1, 2]), [2, 2], "x = 2: y = √(8 − 14 + 10) = 2 on the upper half");
   assert.deepEqual(snapToRealCurve(curve, [-10, 2], [1, 2]), [round5(curve.roots()[0]), 0], "left of the only root there is no point: jump to the root");
-  const oval = new RealCurve({ a: -4, b: 1 });
+  const oval = realWeierstrass({ a: -4, b: 1 });
   const [, r1, r2] = oval.roots();
   assert.deepEqual(snapToRealCurve(oval, [1, 1], [0, 1]), [round5(r2), 0], `moving right into the gap (${r1}, ${r2}) between the oval and the branch jumps to the far root`);
 });

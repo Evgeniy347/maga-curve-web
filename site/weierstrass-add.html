@@ -3,37 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Сложение точек кривой Вейерштрасса</title>
-<meta name="description" content="Классическая форма y² = x³ + ax + b над 𝔽p: секущая по модулю, R = P + Q и ход вычисления по шагам. По умолчанию — кривая диссертации в форме Вейерштрасса.">
+<title>Сложение точек над 𝔽p · Форма Вейерштрасса</title>
+<meta name="description" content="Сложение точек над 𝔽p: форма вейерштрасса y² = x³ + ax + b, график, ход вычисления по шагам.">
 <link rel="stylesheet" href="/core/gateway.css">
 <script src="/core/gateway.js"></script>
 <link rel="stylesheet" href="css/site.css">
-<script type="module" src="js/modk-add.js"></script>
+<script type="module" src="js/app.js"></script>
 </head>
 <body>
-<main id="main" class="gw-wrap">
-  <nav class="subnav" aria-label="Инструменты">
-    <a href="index.html">Обзор</a>
-    <a href="montgomery-add.html">Сложение · Монтгомери</a>
-    <a href="modk-add.html" aria-current="page">Сложение · Вейерштрасс</a>
-    <a href="montgomery-mul.html">Умножение над 𝔽<sub>p</sub></a>
-    <a href="reals-add.html">Сложение над ℝ</a>
-    <a href="reals-mul.html">Умножение над ℝ</a>
-    <span class="subnav-sep" aria-hidden="true"></span>
-    <a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a>
-    <a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a>
+<main id="main" class="gw-wrap" data-form="weierstrass" data-op="add">
+  <nav class="sitenav" aria-label="Разделы">
+    <div class="form-tabs">
+      <a class="form-tab" href="montgomery-add.html"><b>Форма Монтгомери</b><span>By² = x³ + Ax² + x</span></a>
+      <a class="form-tab" href="weierstrass-add.html" aria-current="true"><b>Форма Вейерштрасса</b><span>y² = x³ + ax + b</span></a>
+      <span class="sitenav-links"><a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a><a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a></span>
+    </div>
+    <div class="op-tabs">
+      <a href="weierstrass-add.html" aria-current="page">Сложение над 𝔽<sub>p</sub></a>
+      <a href="weierstrass-mul.html">Умножение над 𝔽<sub>p</sub></a>
+      <a href="weierstrass-reals-add.html">Сложение над ℝ</a>
+      <a href="weierstrass-reals-mul.html">Умножение над ℝ</a>
+    </div>
   </nav>
   <div class="gw-page-head">
-    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки над 𝔽<sub>p</sub></a> / Вейерштрасс</div>
-    <h1>Сложение точек кривой Вейерштрасса</h1>
-    <p class="gw-lead">Классическая форма <span class="m">y</span>² = <span class="m">x</span>³ + <span class="m">ax</span> + <span class="m">b</span>. По умолчанию открыта кривая диссертации после замены <span class="mono">X = x + 2</span> — шаги можно сравнить со страницей Монтгомери.</p>
+    <div class="gw-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки эллиптических кривых</a> / Форма Вейерштрасса / Сложение над 𝔽<sub>p</sub></div>
+    <p class="gw-eyebrow">Форма Вейерштрасса · y² = x³ + ax + b</p>
+    <h1>Сложение точек над <span class="bb">𝔽</span><sub>p</sub></h1>
+    <p class="gw-lead">Та же кривая диссертации в классической форме: замена <span class="mono">X = x + 2</span> переводит <span class="mono">y² = x³ + 6x² + x</span> в <span class="mono">y² = x³ + 18x + 14</span>. Шаги можно сравнить с формой Монтгомери.</p>
   </div>
   <div class="tool">
     <section class="card plot-card" aria-label="График">
-      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="modk-add.html?a=18&amp;b=14&amp;p=29&amp;px=4&amp;py=11&amp;qx=9&amp;qy=8">P + Q</a><a class="chip" href="modk-add.html?a=18&amp;b=14&amp;p=29&amp;px=11&amp;py=8&amp;qx=11&amp;qy=8">[2]G</a><a class="chip" href="modk-add.html?a=18&amp;b=14&amp;p=29&amp;px=27&amp;py=17&amp;qx=11&amp;qy=8">[3]G = [2]G + G</a><a class="chip" href="modk-add.html?a=18&amp;b=14&amp;p=29&amp;px=11&amp;py=21&amp;qx=11&amp;qy=8">−G + G = ∞</a></div>
+      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="weierstrass-add.html?a=18&amp;b=14&amp;p=29&amp;px=4&amp;py=11&amp;qx=9&amp;qy=8">P + Q</a><a class="chip" href="weierstrass-add.html?a=18&amp;b=14&amp;p=29&amp;px=11&amp;py=8&amp;qx=11&amp;qy=8">[2]G</a><a class="chip" href="weierstrass-add.html?a=18&amp;b=14&amp;p=29&amp;px=27&amp;py=17&amp;qx=11&amp;qy=8">[3]G = [2]G + G</a><a class="chip" href="weierstrass-add.html?a=18&amp;b=14&amp;p=29&amp;px=11&amp;py=21&amp;qx=11&amp;qy=8">−G + G = ∞</a></div>
       <div id="plot"></div>
       <ul class="legend" aria-label="Легенда графика">
-        <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg><span class="legend-points"></span></li>
+        <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg><span class="legend-points">точки кривой</span></li>
         <li><svg viewBox="0 0 22 14" aria-hidden="true"><path d="M2 12 20 2" stroke="var(--chord)" stroke-width="2"/></svg><span class="legend-line mono"></span></li>
         <li class="legend-third"><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="5" fill="none" stroke="var(--r)" stroke-width="2" stroke-dasharray="3 3"/></svg>третья точка −R, отражение −R → R</li>
       </ul>
@@ -55,7 +58,7 @@
       <section class="card panel" aria-labelledby="points-h">
         <h2 id="points-h">Параметры и точки</h2>
         <form id="form" onsubmit="return false">
-          <fieldset><legend>Коэффициенты и поле</legend><div class="row"><div class="field"><label for="coefficient-a">a</label><input id="coefficient-a" name="a" value="18" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-b">b</label><input id="coefficient-b" name="b" value="14" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1" min="2" inputmode="numeric"></div></div></fieldset>
+          <fieldset><legend>Коэффициенты и поле</legend><div class="row"><div class="field"><label for="coefficient-a">a</label><input id="coefficient-a" name="a" value="18" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-b">b</label><input id="coefficient-b" name="b" value="14" type="number" step="1" inputmode="numeric"></div><div class="field"><label for="coefficient-p">p</label><input id="coefficient-p" name="p" value="29" type="number" step="1" inputmode="numeric"></div></div></fieldset>
           <fieldset><legend><span class="dot" style="background:var(--p)"></span>Точка <span class="m">P</span> <span class="hint">· порядок <b class="mono point-order-p"></b></span></legend><div class="row two">
             <div class="field is-p"><label for="point-p-x">x</label><input id="point-p-x" name="px" value="4" type="number" step="1" inputmode="numeric"></div>
             <div class="field is-p"><label for="point-p-y">y</label><input id="point-p-y" name="py" value="11" type="number" step="1" inputmode="numeric"></div></div></fieldset>
@@ -76,7 +79,7 @@
     </div>
   </div>
   <section class="gw-section page-note">
-    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы Вейерштрасса и ℝ основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
+    <p>Учебный инструмент к магистерской диссертации «Анализ стойкости алгоритмов на основе Curve25519 к атакам на ДЛОГ» (УрФУ). <a href="https://github.com/Evgeniy347/maga-curve-web">Исходный код на GitHub</a> · лицензия MIT · страницы формы Вейерштрасса основаны на интерактиве <a href="https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/">Andrea Corbellini</a>.</p>
   </section>
 </main>
 </body>

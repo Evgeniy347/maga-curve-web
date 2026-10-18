@@ -204,7 +204,7 @@ export class FormPage {
 
   markPreset() {
     const current = new Map([...this.root.querySelectorAll("#form input:not([readonly])")].map((input) => [input.name, input.value]));
-    for (const chip of this.root.querySelectorAll("a.chip[href*='?']")) {
+    for (const chip of this.root.querySelectorAll("a.gw-chip[href*='?']")) {
       const preset = queryValues(chip.getAttribute("href"));
       const matches = [...preset].every(([name, value]) => current.get(name) === value);
       chip.setAttribute("aria-current", String(matches));

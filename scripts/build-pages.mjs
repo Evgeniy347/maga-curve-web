@@ -145,30 +145,48 @@ const FOOT = `  <section class="gw-section page-note">
 </html>
 `;
 
-export function siteNav(currentForm, currentOp) {
-  const formTabs = Object.entries(FORMS).map(([key, form]) => {
+function crumbs(items) {
+  const links = items.map(([label, href]) => (href ? `      <li><a href="${href}">${label}</a></li>` : `      <li><span aria-current="page">${label}</span></li>`));
+  return `    <nav class="gw-crumbs" aria-label="Путь"><ol>
+      <li><a href="/">Новости</a></li>
+${links.join("\n")}
+    </ol></nav>
+`;
+}
+
+export function sectionHead(currentForm, currentOp) {
+  const trail = currentForm
+    ? [[SITE_TITLE, "index.html"], [FORMS[currentForm].name, pageFile(currentForm, "add")], [OPERATIONS[currentOp].tab, null]]
+    : [[SITE_TITLE, null]];
+  return `  <section class="gw-page-head">
+${crumbs(trail)}    <p class="gw-eyebrow">Учебный интерактив · магистерская диссертация</p>
+    <h1>${SITE_TITLE}</h1>
+  </section>
+`;
+}
+
+export function siteTabs(currentForm, currentOp) {
+  const overview = `    <a class="gw-tab" href="index.html"${currentForm ? "" : ' aria-current="page"'}>Обзор</a>`;
+  const forms = Object.entries(FORMS).map(([key, form]) => {
     const current = key === currentForm ? ' aria-current="true"' : "";
-    return `      <a class="form-tab" href="${pageFile(key, currentOp ?? "add")}"${current}><b>${form.name}</b><span>${form.equation}</span></a>`;
-  }).join("\n");
-  const opTabs = currentForm
-    ? `    <div class="op-tabs">
-${Object.entries(OPERATIONS).map(([key, op]) => `      <a href="${pageFile(currentForm, key)}"${key === currentOp ? ' aria-current="page"' : ""}>${op.tab}</a>`).join("\n")}
-    </div>
-`
-    : "";
-  return `  <nav class="sitenav" aria-label="Разделы">
-    <div class="form-tabs">
-${formTabs}
-      <span class="sitenav-links"><a href="${ORIGINAL}" rel="noopener">Оригинал ↗</a><a href="${GITHUB}" rel="noopener">GitHub ↗</a></span>
-    </div>
-${opTabs}  </nav>
+    return `    <a class="gw-tab" href="${pageFile(key, currentOp ?? "add")}"${current}>${form.name}</a>`;
+  });
+  const formTabs = `  <nav class="gw-tabs form-tabs" aria-label="Форма кривой">
+${[overview, ...forms].join("\n")}
+  </nav>
+`;
+  if (!currentForm) return formTabs;
+  const ops = Object.entries(OPERATIONS).map(([key, op]) => `    <a class="gw-tab" href="${pageFile(currentForm, key)}"${key === currentOp ? ' aria-current="page"' : ""}>${op.tab}</a>`);
+  return formTabs + `  <nav class="gw-tabs op-tabs" aria-label="Операция">
+${ops.join("\n")}
+  </nav>
 `;
 }
 
 function chips(file, presets) {
   return presets.map(({ label, values }) => {
     const query = values.map(([k, v]) => `${k}=${v}`).join("&amp;");
-    return `<a class="chip" href="${file}?${query}">${label}</a>`;
+    return `<a class="gw-chip" href="${file}?${query}">${label}</a>`;
   }).join("");
 }
 
@@ -280,9 +298,9 @@ export function toolPage(formKey, op) {
   const stepsTitle = op.startsWith("reals") ? "Ход вычисления" : 'Ход вычисления · по модулю <span class="steps-modulus"></span>';
   const description = `${operation.title}: ${form.name.toLowerCase()} ${form.equation}, график, ход вычисления по шагам.`;
   return head(`${operation.title} · ${form.name}`, description, "app.js") + `<main id="main" class="gw-wrap" data-form="${formKey}" data-op="${op}">
-  <p class="gw-crumbs page-crumbs"><a href="/">Все страницы</a> / <a href="index.html">${SITE_TITLE}</a> / ${form.name} / ${operation.tab}</p>
-${siteNav(formKey, op)}  <div class="gw-page-head">
-    <h1>${operation.heading}</h1>
+${sectionHead(formKey, op)}${siteTabs(formKey, op)}  <div class="tool-head">
+    <p class="tool-form mono">${form.equation}</p>
+    <h2>${operation.heading}</h2>
     <p class="gw-lead">${settings.lead}</p>
   </div>
   <div class="tool">
@@ -324,13 +342,11 @@ export function landingPage() {
         <ul class="tool-links">${toolLinks(key)}</ul>
       </section>`).join("\n");
   return head(`${SITE_TITLE} — сложение и умножение`, "Учебный интерактив к магистерской диссертации о Curve25519: сложение и умножение точек эллиптической кривой над 𝔽p и ℝ в формах Монтгомери и Вейерштрасса.", "landing.js") + `<main id="main" class="gw-wrap">
-  <p class="gw-crumbs page-crumbs"><a href="/">Все страницы</a> / ${SITE_TITLE}</p>
-${siteNav(null, null)}  <section class="hero">
+${sectionHead(null, null)}${siteTabs(null, null)}  <section class="hero">
     <div>
-      <p class="gw-eyebrow">Учебный интерактив · магистерская диссертация</p>
-      <h1>${SITE_TITLE}</h1>
-      <p class="gw-lead">Сложение и умножение точек над конечным полем ${F} и над ℝ — в формах Монтгомери и Вейерштрасса. Над ${F} секущая «наматывается» на квадрат ${m("p")}×${m("p")}, и каждое действие с λ, ${m("x")}₃ и ${m("y")}₃ разобрано по модулю — на той же кривой, что в ручном прогоне диссертации.</p>
-      <p class="meta"><a href="${GITHUB}">Исходный код на GitHub</a></p>
+      <h2>Сложение и умножение точек над ${F} и ℝ</h2>
+      <p class="gw-lead">Две формы кривой — Монтгомери и Вейерштрасса — и в каждой четыре операции. Над ${F} секущая «наматывается» на квадрат ${m("p")}×${m("p")}, и каждое действие с λ, ${m("x")}₃ и ${m("y")}₃ разобрано по модулю — на той же кривой, что в ручном прогоне диссертации.</p>
+      <p class="meta"><a href="${GITHUB}" rel="noopener">Исходный код на GitHub ↗</a> · <a href="${ORIGINAL}" rel="noopener">Оригинальный интерактив ↗</a></p>
     </div>
     <figure class="card hero-plot" style="margin:0"><div id="hero-plot"></div><figcaption><span class="mono">(2, 11) + (7, 8) = (19, 5)</span> на <span class="mono">y² = x³ + 6x² + x</span> над <span class="bb">𝔽</span><sub>29</sub></figcaption></figure>
   </section>
@@ -343,7 +359,7 @@ ${formCards}
   <section class="block" aria-labelledby="how-h">
     <div class="block-head"><p class="gw-eyebrow">Как пользоваться</p><h2 id="how-h">Три шага</h2></div>
     <ol class="how">
-<li><b>Выберите форму и операцию.</b> Вкладки вверху: форма Монтгомери или Вейерштрасса, затем сложение или умножение над ${F} или ℝ.</li>
+<li><b>Выберите форму и операцию.</b> Вкладки под заголовком: форма Монтгомери или Вейерштрасса, под ними — сложение или умножение над ${F} или ℝ.</li>
 <li><b>Задайте точки.</b> Введите координаты или нажмите готовый пример — неверная точка сама притянется к кривой.</li>
 <li><b>Проверьте арифметику.</b> Каждый шаг λ, ${m("x")}₃, ${m("y")}₃ показан с вычислением — как при ручном прогоне.</li>
 </ol>

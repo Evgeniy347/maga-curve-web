@@ -12,27 +12,35 @@
 </head>
 <body>
 <main id="main" class="gw-wrap" data-form="montgomery" data-op="mul">
-  <p class="gw-crumbs page-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки эллиптических кривых</a> / Форма Монтгомери / Умножение над 𝔽<sub>p</sub></p>
-  <nav class="sitenav" aria-label="Разделы">
-    <div class="form-tabs">
-      <a class="form-tab" href="montgomery-mul.html" aria-current="true"><b>Форма Монтгомери</b><span>By² = x³ + Ax² + x</span></a>
-      <a class="form-tab" href="weierstrass-mul.html"><b>Форма Вейерштрасса</b><span>y² = x³ + ax + b</span></a>
-      <span class="sitenav-links"><a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a><a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a></span>
-    </div>
-    <div class="op-tabs">
-      <a href="montgomery-add.html">Сложение над 𝔽<sub>p</sub></a>
-      <a href="montgomery-mul.html" aria-current="page">Умножение над 𝔽<sub>p</sub></a>
-      <a href="montgomery-reals-add.html">Сложение над ℝ</a>
-      <a href="montgomery-reals-mul.html">Умножение над ℝ</a>
-    </div>
+  <section class="gw-page-head">
+    <nav class="gw-crumbs" aria-label="Путь"><ol>
+      <li><a href="/">Новости</a></li>
+      <li><a href="index.html">Точки эллиптических кривых</a></li>
+      <li><a href="montgomery-add.html">Форма Монтгомери</a></li>
+      <li><span aria-current="page">Умножение над 𝔽<sub>p</sub></span></li>
+    </ol></nav>
+    <p class="gw-eyebrow">Учебный интерактив · магистерская диссертация</p>
+    <h1>Точки эллиптических кривых</h1>
+  </section>
+  <nav class="gw-tabs form-tabs" aria-label="Форма кривой">
+    <a class="gw-tab" href="index.html">Обзор</a>
+    <a class="gw-tab" href="montgomery-mul.html" aria-current="true">Форма Монтгомери</a>
+    <a class="gw-tab" href="weierstrass-mul.html">Форма Вейерштрасса</a>
   </nav>
-  <div class="gw-page-head">
-    <h1>Умножение точки на число над <span class="bb">𝔽</span><sub>p</sub></h1>
+  <nav class="gw-tabs op-tabs" aria-label="Операция">
+    <a class="gw-tab" href="montgomery-add.html">Сложение над 𝔽<sub>p</sub></a>
+    <a class="gw-tab" href="montgomery-mul.html" aria-current="page">Умножение над 𝔽<sub>p</sub></a>
+    <a class="gw-tab" href="montgomery-reals-add.html">Сложение над ℝ</a>
+    <a class="gw-tab" href="montgomery-reals-mul.html">Умножение над ℝ</a>
+  </nav>
+  <div class="tool-head">
+    <p class="tool-form mono">By² = x³ + Ax² + x</p>
+    <h2>Умножение точки на число над <span class="bb">𝔽</span><sub>p</sub></h2>
     <p class="gw-lead">Так владелец ключа считает открытый ключ <span class="m">Q</span> = [<span class="m">d</span>]<span class="m">G</span>: по битам <span class="m">d</span> слева направо удвоить и, если бит равен 1, прибавить <span class="m">G</span>. По умолчанию — ключ <span class="mono">d = 538</span> из ручного прогона на кривой диссертации.</p>
   </div>
   <div class="tool">
     <section class="card plot-card" aria-label="График">
-      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=538&amp;px=9&amp;py=8">d = 538</a><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=3&amp;px=9&amp;py=8">[3]G</a><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=5&amp;px=9&amp;py=8">[5]G = ∞</a><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=-1&amp;px=9&amp;py=8">[−1]G</a><a class="chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=13&amp;px=19&amp;py=5">Точка порядка 40</a></div>
+      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="gw-chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=538&amp;px=9&amp;py=8">d = 538</a><a class="gw-chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=3&amp;px=9&amp;py=8">[3]G</a><a class="gw-chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=5&amp;px=9&amp;py=8">[5]G = ∞</a><a class="gw-chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=-1&amp;px=9&amp;py=8">[−1]G</a><a class="gw-chip" href="montgomery-mul.html?a=6&amp;b=1&amp;p=29&amp;n=13&amp;px=19&amp;py=5">Точка порядка 40</a></div>
       <div id="plot"></div>
       <ul class="legend" aria-label="Легенда графика">
         <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg><span class="legend-points">точки кривой</span></li>

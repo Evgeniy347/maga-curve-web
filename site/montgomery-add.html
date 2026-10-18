@@ -12,27 +12,35 @@
 </head>
 <body>
 <main id="main" class="gw-wrap" data-form="montgomery" data-op="add">
-  <p class="gw-crumbs page-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки эллиптических кривых</a> / Форма Монтгомери / Сложение над 𝔽<sub>p</sub></p>
-  <nav class="sitenav" aria-label="Разделы">
-    <div class="form-tabs">
-      <a class="form-tab" href="montgomery-add.html" aria-current="true"><b>Форма Монтгомери</b><span>By² = x³ + Ax² + x</span></a>
-      <a class="form-tab" href="weierstrass-add.html"><b>Форма Вейерштрасса</b><span>y² = x³ + ax + b</span></a>
-      <span class="sitenav-links"><a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a><a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a></span>
-    </div>
-    <div class="op-tabs">
-      <a href="montgomery-add.html" aria-current="page">Сложение над 𝔽<sub>p</sub></a>
-      <a href="montgomery-mul.html">Умножение над 𝔽<sub>p</sub></a>
-      <a href="montgomery-reals-add.html">Сложение над ℝ</a>
-      <a href="montgomery-reals-mul.html">Умножение над ℝ</a>
-    </div>
+  <section class="gw-page-head">
+    <nav class="gw-crumbs" aria-label="Путь"><ol>
+      <li><a href="/">Новости</a></li>
+      <li><a href="index.html">Точки эллиптических кривых</a></li>
+      <li><a href="montgomery-add.html">Форма Монтгомери</a></li>
+      <li><span aria-current="page">Сложение над 𝔽<sub>p</sub></span></li>
+    </ol></nav>
+    <p class="gw-eyebrow">Учебный интерактив · магистерская диссертация</p>
+    <h1>Точки эллиптических кривых</h1>
+  </section>
+  <nav class="gw-tabs form-tabs" aria-label="Форма кривой">
+    <a class="gw-tab" href="index.html">Обзор</a>
+    <a class="gw-tab" href="montgomery-add.html" aria-current="true">Форма Монтгомери</a>
+    <a class="gw-tab" href="weierstrass-add.html">Форма Вейерштрасса</a>
   </nav>
-  <div class="gw-page-head">
-    <h1>Сложение точек над <span class="bb">𝔽</span><sub>p</sub></h1>
+  <nav class="gw-tabs op-tabs" aria-label="Операция">
+    <a class="gw-tab" href="montgomery-add.html" aria-current="page">Сложение над 𝔽<sub>p</sub></a>
+    <a class="gw-tab" href="montgomery-mul.html">Умножение над 𝔽<sub>p</sub></a>
+    <a class="gw-tab" href="montgomery-reals-add.html">Сложение над ℝ</a>
+    <a class="gw-tab" href="montgomery-reals-mul.html">Умножение над ℝ</a>
+  </nav>
+  <div class="tool-head">
+    <p class="tool-form mono">By² = x³ + Ax² + x</p>
+    <h2>Сложение точек над <span class="bb">𝔽</span><sub>p</sub></h2>
     <p class="gw-lead">Кривая из диссертации — та же форма и тот же кофактор 8, что у X25519. Выберите <span class="m">P</span> и <span class="m">Q</span>: секущая «наматывается» на квадрат <span class="m">p</span>×<span class="m">p</span>, третья точка пересечения отражается в <span class="m">R</span>.</p>
   </div>
   <div class="tool">
     <section class="card plot-card" aria-label="График">
-      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=2&amp;py=11&amp;qx=7&amp;qy=8">P + Q</a><a class="chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=9&amp;py=8&amp;qx=9&amp;qy=8">[2]G</a><a class="chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=25&amp;py=17&amp;qx=9&amp;qy=8">[3]G = [2]G + G</a><a class="chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=9&amp;py=21&amp;qx=9&amp;qy=8">−G + G = ∞</a></div>
+      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="gw-chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=2&amp;py=11&amp;qx=7&amp;qy=8">P + Q</a><a class="gw-chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=9&amp;py=8&amp;qx=9&amp;qy=8">[2]G</a><a class="gw-chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=25&amp;py=17&amp;qx=9&amp;qy=8">[3]G = [2]G + G</a><a class="gw-chip" href="montgomery-add.html?a=6&amp;b=1&amp;p=29&amp;px=9&amp;py=21&amp;qx=9&amp;qy=8">−G + G = ∞</a></div>
       <div id="plot"></div>
       <ul class="legend" aria-label="Легенда графика">
         <li><svg viewBox="0 0 22 14" aria-hidden="true"><circle cx="11" cy="7" r="3.6" fill="var(--curve)"/></svg><span class="legend-points">точки кривой</span></li>

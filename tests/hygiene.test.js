@@ -115,13 +115,16 @@ test("every page follows the gateway contract: core CSS/JS in <head>, no own hea
   }
 });
 
-test("two-level menu: form tabs on every page, operation tabs of the current form on tool pages", () => {
-  const formTabsOf = (html) => html.match(/<div class="form-tabs">[\s\S]*?<\/div>/)[0].replace(/ aria-current="true"/g, "").replace(/-(add|mul|reals-add|reals-mul)\.html/g, "-OP.html");
-  const reference = formTabsOf(read("index.html"));
-  for (const form of FORMS) assert.match(reference, new RegExp(`href="${form}-OP\.html"`), `the landing page offers the ${form} form`);
+test("tab rows: forms (with Обзор) on every page, operations of the current form on tool pages", () => {
+  const rowOf = (html, name) => html.match(new RegExp(`<nav class="gw-tabs ${name}"[\\s\\S]*?<\\/nav>`))?.[0];
+  const formRow = (html) => rowOf(html, "form-tabs").replace(/ aria-current="(true|page)"/g, "").replace(/-(add|mul|reals-add|reals-mul)\.html/g, "-OP.html");
+  const reference = formRow(read("index.html"));
+  assert.match(reference, /<a class="gw-tab" href="index\.html">Обзор<\/a>/, "the first form tab is the overview");
+  for (const form of FORMS) assert.match(reference, new RegExp(`href="${form}-OP\\.html"`), `the landing page offers the ${form} form`);
+  assert.equal(rowOf(read("index.html"), "op-tabs"), undefined, "the overview has no operation row");
   for (const page of PAGES) {
     const html = read(page);
-    assert.equal(formTabsOf(html), reference, `${page}: form tabs differ from index.html`);
+    assert.equal(formRow(html), reference, `${page}: form tabs differ from index.html`);
     assert.doesNotMatch(html, /corbellini\.name\/ecc\/interactive\/(reals|modk-mul)/, `${page}: the menu leads to our own pages, not Corbellini's`);
   }
   for (const form of FORMS) {
@@ -129,15 +132,36 @@ test("two-level menu: form tabs on every page, operation tabs of the current for
       const page = `${form}-${op}.html`;
       const html = read(page);
       assert.match(html, new RegExp(`<main id="main" class="gw-wrap" data-form="${form}" data-op="${op}">`), `${page}: app.js picks the controller from data-form/data-op`);
-      assert.match(html, new RegExp(`class="form-tab" href="${form}-${op}\.html" aria-current="true"`), `${page}: its form tab is current`);
+      assert.match(html, new RegExp(`class="gw-tab" href="${form}-${op}\\.html" aria-current="true"`), `${page}: its form tab is current`);
       for (const other of FORMS.filter((f) => f !== form)) {
-        assert.match(html, new RegExp(`class="form-tab" href="${other}-${op}\.html"`), `${page}: switching the form keeps the operation`);
+        assert.match(html, new RegExp(`class="gw-tab" href="${other}-${op}\\.html">`), `${page}: switching the form keeps the operation`);
       }
-      const opTabs = html.match(/<div class="op-tabs">[\s\S]*?<\/div>/)[0];
+      const opTabs = rowOf(html, "op-tabs");
       assert.deepEqual([...opTabs.matchAll(/href="([^"]+)"/g)].map(([, href]) => href), OPERATIONS.map((o) => `${form}-${o}.html`), `${page}: four operation tabs of the same form`);
       assert.match(opTabs, new RegExp(`href="${page}" aria-current="page"`), `${page}: its operation tab is current`);
     }
   }
+});
+
+test("the gateway guard passes every page of the site", async () => {
+  const { checkSite } = await import("../scripts/guard.mjs");
+  assert.deepEqual(checkSite(), [], "scripts/guard.mjs: breadcrumbs → section title → tabs → content (PUBLISHING.md §3)");
+});
+
+test("the guard rejects the layouts that went wrong before", async () => {
+  const { checkPage } = await import("../scripts/guard.mjs");
+  const good = read("montgomery-add.html");
+  const crumbs = good.match(/    <nav class="gw-crumbs"[\s\S]*?<\/nav>\n/)[0];
+  const tabs = good.match(/  <nav class="gw-tabs form-tabs"[\s\S]*?<\/nav>\n/)[0];
+  const tabsAboveHead = good.replace(tabs, "").replace('  <section class="gw-page-head">', `${tabs}  <section class="gw-page-head">`);
+  assert.match(checkPage("x", tabsAboveHead).join(), /first element of main must be section\.gw-page-head/, "tabs above the section head (our first two-level layout)");
+  const crumbsBelowTitle = good.replace(crumbs, "").replace("    <h1>", `${crumbs}    <h1>`);
+  assert.match(checkPage("x", crumbsBelowTitle).join(), /nothing above the crumbs/, "anything above the crumbs inside the head");
+  const tabsAfterContent = good.replace(tabs, "").replace('  <div class="tool">', `${tabs}  <div class="tool">`);
+  assert.match(checkPage("x", tabsAfterContent).join(), /tabs must come right after gw-page-head/, "tabs below the content heading");
+  assert.match(checkPage("x", good.replace('<li><a href="/">Новости</a></li>', '<li><a href="/">Все страницы</a></li>')).join(), /first crumb/, "the first crumb is «Новости»");
+  assert.match(checkPage("x", good.replaceAll("gw-chip", "chip")).join(), /gw-chip/, "examples use the core chip");
+  assert.match(checkPage("x", good.replace('href="montgomery-add.html" aria-current="page">', 'href="montgomery-add.html">')).join(), /exactly one current tab/, "every tab row marks the open tab");
 });
 
 test("site/ is exactly what the page generator produces", async () => {
@@ -147,23 +171,16 @@ test("site/ is exactly what the page generator produces", async () => {
   }
 });
 
-test("crumbs come first, then the form and operation tabs, then the heading; no eyebrow repeating the active tab", () => {
-  for (const page of PAGES) {
-    const html = read(page);
-    const crumbs = html.indexOf('class="gw-crumbs page-crumbs"');
-    const nav = html.indexOf('<nav class="sitenav"');
-    const heading = html.indexOf("<h1>");
-    assert.ok(crumbs > 0 && crumbs < nav && nav < heading, `${page}: breadcrumbs are the top-level navigation, tabs are local to the section`);
-  }
+test("no line repeats the active form tab: only the equation is shown above the tool heading", () => {
   for (const page of TOOL_PAGES) {
-    assert.doesNotMatch(read(page), /<p class="gw-eyebrow">Форма/, `${page}: the active form tab already shows the form and its equation`);
+    assert.doesNotMatch(read(page), /<p class="gw-eyebrow">Форма|<p class="tool-form[^"]*">Форма/, `${page}: the active form tab already names the form`);
   }
 });
 
 test("the site title covers both fields: no «над 𝔽p» on level 1", () => {
   assert.match(read("index.html"), /<h1>Точки эллиптических кривых<\/h1>/, "the site also has pages over ℝ");
   for (const page of TOOL_PAGES) {
-    assert.match(read(page), /<a href="index\.html">Точки эллиптических кривых<\/a>/, `${page}: crumbs name the site`);
+    assert.match(read(page), /<li><a href="index\.html">Точки эллиптических кривых<\/a><\/li>/, `${page}: crumbs name the site`);
   }
 });
 

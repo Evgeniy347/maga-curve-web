@@ -13,6 +13,7 @@
     "serve": "node scripts/serve.mjs",
     "fixture": "node scripts/corbellini-fixture.mjs && node scripts/corbellini-reals-fixture.mjs",
     "mutate": "node scripts/mutate.mjs",
-    "build": "node scripts/build-pages.mjs"
+    "build": "node scripts/build-pages.mjs",
+    "guard": "node scripts/guard.mjs"
   }
 }

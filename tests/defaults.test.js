@@ -61,7 +61,7 @@ test("every example chip on every page leads to a sum that passes the on-curve c
   for (const [name, [fieldForm, realForm]] of Object.entries(forms)) {
     for (const op of ["add", "reals-add"]) {
       const page = `${name}-${op}.html`;
-      const chips = [...read(page).matchAll(/class="chip" href="[^"?]+\?([^"]+)">([^<]+)</g)];
+      const chips = [...read(page).matchAll(/class="gw-chip" href="[^"?]+\?([^"]+)">([^<]+)</g)];
       assert.ok(chips.length >= 4, `${page} offers examples`);
       for (const [, query, label] of chips) {
         const v = Object.fromEntries(query.split("&amp;").map((pair) => pair.split("=")).map(([k, x]) => [k, Number(x)]));

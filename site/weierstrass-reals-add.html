@@ -12,27 +12,35 @@
 </head>
 <body>
 <main id="main" class="gw-wrap" data-form="weierstrass" data-op="reals-add">
-  <p class="gw-crumbs page-crumbs"><a href="/">Все страницы</a> / <a href="index.html">Точки эллиптических кривых</a> / Форма Вейерштрасса / Сложение над ℝ</p>
-  <nav class="sitenav" aria-label="Разделы">
-    <div class="form-tabs">
-      <a class="form-tab" href="montgomery-reals-add.html"><b>Форма Монтгомери</b><span>By² = x³ + Ax² + x</span></a>
-      <a class="form-tab" href="weierstrass-reals-add.html" aria-current="true"><b>Форма Вейерштрасса</b><span>y² = x³ + ax + b</span></a>
-      <span class="sitenav-links"><a href="https://andrea.corbellini.name/ecc/interactive/modk-add.html" rel="noopener">Оригинал ↗</a><a href="https://github.com/Evgeniy347/maga-curve-web" rel="noopener">GitHub ↗</a></span>
-    </div>
-    <div class="op-tabs">
-      <a href="weierstrass-add.html">Сложение над 𝔽<sub>p</sub></a>
-      <a href="weierstrass-mul.html">Умножение над 𝔽<sub>p</sub></a>
-      <a href="weierstrass-reals-add.html" aria-current="page">Сложение над ℝ</a>
-      <a href="weierstrass-reals-mul.html">Умножение над ℝ</a>
-    </div>
+  <section class="gw-page-head">
+    <nav class="gw-crumbs" aria-label="Путь"><ol>
+      <li><a href="/">Новости</a></li>
+      <li><a href="index.html">Точки эллиптических кривых</a></li>
+      <li><a href="weierstrass-add.html">Форма Вейерштрасса</a></li>
+      <li><span aria-current="page">Сложение над ℝ</span></li>
+    </ol></nav>
+    <p class="gw-eyebrow">Учебный интерактив · магистерская диссертация</p>
+    <h1>Точки эллиптических кривых</h1>
+  </section>
+  <nav class="gw-tabs form-tabs" aria-label="Форма кривой">
+    <a class="gw-tab" href="index.html">Обзор</a>
+    <a class="gw-tab" href="montgomery-reals-add.html">Форма Монтгомери</a>
+    <a class="gw-tab" href="weierstrass-reals-add.html" aria-current="true">Форма Вейерштрасса</a>
   </nav>
-  <div class="gw-page-head">
-    <h1>Сложение точек над ℝ</h1>
+  <nav class="gw-tabs op-tabs" aria-label="Операция">
+    <a class="gw-tab" href="weierstrass-add.html">Сложение над 𝔽<sub>p</sub></a>
+    <a class="gw-tab" href="weierstrass-mul.html">Умножение над 𝔽<sub>p</sub></a>
+    <a class="gw-tab" href="weierstrass-reals-add.html" aria-current="page">Сложение над ℝ</a>
+    <a class="gw-tab" href="weierstrass-reals-mul.html">Умножение над ℝ</a>
+  </nav>
+  <div class="tool-head">
+    <p class="tool-form mono">y² = x³ + ax + b</p>
+    <h2>Сложение точек над ℝ</h2>
     <p class="gw-lead">Над вещественными числами кривая — гладкая линия, и закон сложения виден буквально: прямая через <span class="m">P</span> и <span class="m">Q</span> пересекает кривую в третьей точке −<span class="m">R</span>, её отражение относительно оси <span class="m">x</span> — это <span class="m">R</span> = <span class="m">P</span> + <span class="m">Q</span>.</p>
   </div>
   <div class="tool">
     <section class="card plot-card" aria-label="График">
-      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=3&amp;qy=4">P + Q</a><a class="chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=1&amp;qy=2">2P</a><a class="chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=1&amp;qy=-2">P + (−P) = ∞</a><a class="chip" href="weierstrass-reals-add.html?a=-4&amp;b=1&amp;px=0&amp;py=1&amp;qx=2&amp;qy=1">Две компоненты</a></div>
+      <div class="plot-toolbar"><span class="gw-eyebrow">Примеры</span><a class="gw-chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=3&amp;qy=4">P + Q</a><a class="gw-chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=1&amp;qy=2">2P</a><a class="gw-chip" href="weierstrass-reals-add.html?a=-7&amp;b=10&amp;px=1&amp;py=2&amp;qx=1&amp;qy=-2">P + (−P) = ∞</a><a class="gw-chip" href="weierstrass-reals-add.html?a=-4&amp;b=1&amp;px=0&amp;py=1&amp;qx=2&amp;qy=1">Две компоненты</a></div>
       <div id="plot"></div>
       <ul class="legend" aria-label="Легенда графика">
         <li><svg viewBox="0 0 22 14" aria-hidden="true"><path d="M2 12 C 8 2, 14 2, 20 12" fill="none" stroke="var(--curve)" stroke-width="2"/></svg>кривая над ℝ</li>

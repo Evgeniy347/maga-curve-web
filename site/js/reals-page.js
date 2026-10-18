@@ -28,7 +28,8 @@ class RealPage extends FormPage {
   }
 
   curve() {
-    return new RealCurve({ a: this.number("a"), b: this.number("b") });
+    const finite = (name) => this.checked(name, Number.isFinite, `${name} — конечное число; оставлено прежнее значение.`);
+    return new RealCurve({ a: finite("a"), b: finite("b") });
   }
 
   renderCurve(curve, range, scene) {
@@ -50,10 +51,10 @@ export class RealAdditionPage extends RealPage {
     this.qInput = new PointInput(root, "q", snapToRealCurve);
   }
 
-  update() {
+  refresh() {
     const curve = this.curve();
-    const P = this.pInput.snap(curve);
-    const Q = this.qInput.snap(curve);
+    const P = this.pInput.snap(curve, this.changed);
+    const Q = this.qInput.snap(curve, this.changed);
     const trace = curve.addTrace(P, Q);
     const R = trace.result;
     const third = curve.neg(R);
@@ -79,10 +80,10 @@ export class RealAdditionPage extends RealPage {
 }
 
 export class RealMultiplicationPage extends RealPage {
-  update() {
+  refresh() {
     const curve = this.curve();
-    const n = Math.trunc(this.number("n"));
-    const P = this.pInput.snap(curve);
+    const n = this.scalar();
+    const P = this.pInput.snap(curve, this.changed);
     const result = realMultiplicationStages(curve, n, P);
     const Q = result.chain.at(-1).point;
     const range = realPlotRange(curve, [P, Q]);

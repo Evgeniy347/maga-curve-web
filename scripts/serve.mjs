@@ -4,6 +4,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = fileURLToPath(new URL("../site/", import.meta.url));
+const BROWSER_TESTS = fileURLToPath(new URL("../tests/browser/", import.meta.url));
 const PORT = Number(process.env.PORT ?? 8083);
 const GATEWAY = process.env.GATEWAY_URL ?? "http://192.168.0.147:8082";
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
@@ -15,8 +16,9 @@ createServer(async (request, response) => {
     response.writeHead(upstream.status, { "Content-Type": upstream.headers.get("content-type") ?? "text/plain" }).end(Buffer.from(await upstream.arrayBuffer()));
     return;
   }
-  const file = normalize(join(ROOT, path.endsWith("/") ? `${path}index.html` : path));
-  if (!file.startsWith(normalize(ROOT))) {
+  const [root, relative] = path.startsWith("/__tests__/") ? [BROWSER_TESTS, path.slice("/__tests__".length)] : [ROOT, path];
+  const file = normalize(join(root, relative.endsWith("/") ? `${relative}index.html` : relative));
+  if (!file.startsWith(normalize(root))) {
     response.writeHead(403).end();
     return;
   }

@@ -81,20 +81,33 @@ export function buildScene(curve, P, Q, trace = curve.addTrace(P, Q)) {
   return { scene, third, line, lineKind };
 }
 
+export const LIMITS = { fieldMin: 2, fieldMax: 4999, scalar: 2 ** 31 - 1 };
+
+export function isValidModulus(p) {
+  return Number.isInteger(p) && p >= LIMITS.fieldMin && p <= LIMITS.fieldMax;
+}
+
+export function isValidScalar(n) {
+  return Number.isInteger(n) && Math.abs(n) <= LIMITS.scalar;
+}
+
 export class PointInput {
   constructor(root, prefix, snapper = snapToCurve) {
     this.x = root.querySelector(`input[name='${prefix}x']`);
     this.y = root.querySelector(`input[name='${prefix}y']`);
     this.snapper = snapper;
     this.previous = this.read();
+    this.intended = this.previous;
   }
 
   read() {
     return [Number(this.x.value), Number(this.y.value)];
   }
 
-  snap(curve) {
-    const point = this.snapper(curve, this.read(), this.previous);
+  snap(curve, changed) {
+    const edited = changed === this.x.name || changed === this.y.name;
+    const point = edited ? this.snapper(curve, this.read(), this.previous) : this.snapper(curve, this.intended, this.intended);
+    if (edited) this.intended = point;
     [this.x.value, this.y.value] = point;
     this.previous = point;
     return point;
@@ -106,9 +119,47 @@ export class FormPage {
     this.root = root;
     this.applyQuery(queryValues(window.location.search));
     this.listeners = [];
+    this.lastValid = new Map();
+    this.changed = undefined;
     for (const input of root.querySelectorAll("#form input:not([readonly])")) {
-      input.addEventListener("change", () => this.update());
+      input.addEventListener("change", () => {
+        this.changed = input.name;
+        this.update();
+        this.changed = undefined;
+      });
     }
+  }
+
+  update() {
+    this.warnings = [];
+    this.refresh();
+    this.text(".input-warning", this.warnings.join(" "));
+    this.toggle(".input-warning", this.warnings.length > 0);
+  }
+
+  checked(name, isValid, message) {
+    const value = this.number(name);
+    if (isValid(value)) {
+      this.lastValid.set(name, value);
+      return value;
+    }
+    const fallback = this.lastValid.get(name) ?? Number(this.input(name).defaultValue);
+    this.input(name).value = fallback;
+    this.warnings.push(message);
+    return fallback;
+  }
+
+  fieldModulus() {
+    const { fieldMin, fieldMax } = LIMITS;
+    return this.checked("p", isValidModulus, `p — целое от ${fieldMin} до ${fieldMax}; оставлено прежнее значение.`);
+  }
+
+  integerCoefficient(name) {
+    return this.checked(name, Number.isInteger, `${name} — целое число; оставлено прежнее значение.`);
+  }
+
+  scalar() {
+    return this.checked("n", isValidScalar, "n — целое, по модулю не больше 2³¹ − 1; оставлено прежнее значение.");
   }
 
   applyQuery(values) {
@@ -170,11 +221,11 @@ export class AdditionPage extends FormPage {
     this.plot = new Plot(root.querySelector("#plot"));
   }
 
-  update() {
-    const coefficients = Object.fromEntries(this.form.coefficients.map((name) => [name, this.number(name)]));
-    const curve = this.form.create({ ...coefficients, p: this.number("p") });
-    const P = this.pInput.snap(curve);
-    const Q = this.qInput.snap(curve);
+  refresh() {
+    const coefficients = Object.fromEntries(this.form.coefficients.map((name) => [name, this.integerCoefficient(name)]));
+    const curve = this.form.create({ ...coefficients, p: this.fieldModulus() });
+    const P = this.pInput.snap(curve, this.changed);
+    const Q = this.qInput.snap(curve, this.changed);
     const trace = curve.addTrace(P, Q);
     const state = { coefficients, curve, P, Q, trace };
     this.render(state);
@@ -219,11 +270,11 @@ export class MultiplicationPage extends FormPage {
     this.plot = new Plot(root.querySelector("#plot"));
   }
 
-  update() {
-    const coefficients = Object.fromEntries(this.form.coefficients.map((name) => [name, this.number(name)]));
-    const curve = this.form.create({ ...coefficients, p: this.number("p") });
-    const n = Math.trunc(this.number("n"));
-    const P = this.pInput.snap(curve);
+  refresh() {
+    const coefficients = Object.fromEntries(this.form.coefficients.map((name) => [name, this.integerCoefficient(name)]));
+    const curve = this.form.create({ ...coefficients, p: this.fieldModulus() });
+    const n = this.scalar();
+    const P = this.pInput.snap(curve, this.changed);
     const result = multiplicationStages(curve, n, P, this.form.names);
     const Q = result.result;
     const { p } = curve;
